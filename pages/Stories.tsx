@@ -1,7 +1,7 @@
 
 import React from 'react';
-import InstagramGrid, { MediaItem } from '../components/InstagramGrid';
-import { GALLERY_DATABASE } from '../constants';
+import InstagramGrid, { MediaItem } from '../components/InstagramGrid.tsx';
+import { GALLERY_DATABASE } from '../constants.tsx';
 
 const Stories: React.FC = () => {
   const storyData: MediaItem[] = GALLERY_DATABASE.stories.map((img, i) => ({

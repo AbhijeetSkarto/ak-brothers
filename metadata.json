@@ -1,9 +1,5 @@
 {
   "name": "AK BROTHERS",
-  "description": "A premium, cinematic wedding photography and videography portfolio for AK BROTHERS, featuring a dark gold theme, Google Drive integration, and GSAP animations.",
-  "requestFramePermissions": [
-    "camera",
-    "microphone",
-    "geolocation"
-  ]
+  "description": "Premium Wedding Cinematography Portfolio.",
+  "requestFramePermissions": []
 }

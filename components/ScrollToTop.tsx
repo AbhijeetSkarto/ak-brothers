@@ -2,6 +2,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { ArrowUp } from 'lucide-react';
 import { gsap } from 'gsap';
+import { ScrollToPlugin } from 'gsap/ScrollToPlugin';
+
+gsap.registerPlugin(ScrollToPlugin);
 
 const ScrollToTop: React.FC = () => {
   const [isVisible, setIsVisible] = useState(false);
@@ -43,18 +46,11 @@ const ScrollToTop: React.FC = () => {
   }, [isVisible]);
 
   const scrollToTop = () => {
-    // Animate the scroll position using GSAP
+    // Animate the scroll position using GSAP ScrollToPlugin
     gsap.to(window, {
-      duration: 1.2,
-      scrollTo: 0, // Note: This usually requires ScrollToPlugin, but we'll use a fallback or standard behavior if not present
-      ease: 'power4.inOut',
-      onStart: () => {
-        // Fallback for environments without ScrollToPlugin
-        window.scrollTo({
-          top: 0,
-          behavior: 'smooth'
-        });
-      }
+      duration: 1.5,
+      scrollTo: { y: 0 },
+      ease: 'power4.inOut'
     });
     
     // Aesthetic click feedback

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { BRAND, NAV_SECTIONS } from '../constants';
+import { BRAND, NAV_SECTIONS } from '../constants.tsx';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,7 +15,6 @@ const Navbar: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close mobile menu on navigation
   useEffect(() => setIsOpen(false), [location.pathname]);
 
   return (
@@ -30,7 +29,6 @@ const Navbar: React.FC = () => {
           <span className="hidden sm:block font-cinzel text-xs tracking-[0.4em] text-silver group-hover:text-gold transition-colors">AK BROTHERS</span>
         </Link>
 
-        {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center space-x-10">
           {NAV_SECTIONS.map((link) => (
             <Link
@@ -49,13 +47,11 @@ const Navbar: React.FC = () => {
           </Link>
         </div>
 
-        {/* Mobile Toggle */}
         <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-gold hover:scale-110 transition-transform">
           {isOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
       </div>
 
-      {/* Mobile Sidebar */}
       <div className={`fixed inset-0 bg-obsidian z-[110] flex flex-col items-center justify-center space-y-10 transition-transform duration-700 lg:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <button onClick={() => setIsOpen(false)} className="absolute top-10 right-10 text-gold p-2">
           <X size={32} />

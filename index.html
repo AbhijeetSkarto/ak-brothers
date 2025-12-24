@@ -7,10 +7,12 @@
     <title>AK BROTHERS | Premium Wedding Portfolio</title>
     <meta name="description" content="Official portfolio of AK BROTHERS. Cinematic wedding stories, premium portraits, and luxury films.">
     
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Manrope:wght@300;400;600&display=swap" rel="stylesheet">
     
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
       tailwind.config = {
@@ -31,18 +33,30 @@
         },
       };
     </script>
+
+    <!-- Babel for Browser-side Transpilation -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
     <style>
-      body { background-color: #0a0a0a; color: #e2e2e2; margin: 0; padding: 0; }
+      body { background-color: #0a0a0a; color: #e2e2e2; margin: 0; padding: 0; overflow-x: hidden; }
       .noise-overlay {
         position: fixed; top: 0; left: 0; width: 100%; height: 100%;
         opacity: 0.02; z-index: 9999; pointer-events: none;
         background-image: url("https://www.transparenttextures.com/patterns/natural-paper.png");
       }
-      #root { opacity: 0; transition: opacity 0.5s ease-in; }
+      #loader {
+        position: fixed; inset: 0; background: #0a0a0a; z-index: 10000;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        transition: opacity 0.8s ease-out;
+      }
+      .loader-bar { width: 100px; height: 1px; background: #d4af37; animation: grow 2s infinite ease-in-out; }
+      @keyframes grow { 0% { transform: scaleX(0); opacity: 0; } 50% { transform: scaleX(1); opacity: 1; } 100% { transform: scaleX(0); opacity: 0; } }
+      #root { opacity: 0; transition: opacity 1s ease-in; }
       #root.loaded { opacity: 1; }
       ::-webkit-scrollbar { width: 4px; }
       ::-webkit-scrollbar-thumb { background: #d4af37; border-radius: 10px; }
     </style>
+
     <script type="importmap">
 {
   "imports": {
@@ -53,18 +67,40 @@
     "lucide-react": "https://esm.sh/lucide-react@0.344.0?external=react",
     "gsap": "https://esm.sh/gsap@3.12.5",
     "gsap/ScrollTrigger": "https://esm.sh/gsap@3.12.5/ScrollTrigger",
-    "gsap/": "https://esm.sh/gsap@^3.14.2/",
+    "gsap/ScrollToPlugin": "https://esm.sh/gsap@3.12.5/ScrollToPlugin",
+    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
     "react/": "https://esm.sh/react@^19.2.3/",
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/"
+    "gsap/": "https://esm.sh/gsap@^3.14.2/"
   }
 }
 </script>
   </head>
   <body>
+    <div id="loader">
+      <div class="loader-bar"></div>
+      <span style="font-family: Cinzel; color: #d4af37; font-size: 10px; letter-spacing: 0.5em; margin-top: 20px; text-transform: uppercase;">AK BROTHERS</span>
+    </div>
+    
     <div class="noise-overlay"></div>
     <div id="root"></div>
+
+    <!-- The Entry Point -->
+    <script type="text/babel" data-type="module" data-presets="react,typescript" src="index.tsx"></script>
+
     <script>
-      window.onload = () => document.getElementById('root').classList.add('loaded');
+      // Hide loader once the root component mounts and renders
+      const observer = new MutationObserver(() => {
+        const root = document.getElementById('root');
+        if (root && root.children.length > 0) {
+          document.getElementById('loader').style.opacity = '0';
+          setTimeout(() => {
+            document.getElementById('loader').style.display = 'none';
+            root.classList.add('loaded');
+          }, 800);
+          observer.disconnect();
+        }
+      });
+      observer.observe(document.getElementById('root'), { childList: true });
     </script>
   </body>
 </html>

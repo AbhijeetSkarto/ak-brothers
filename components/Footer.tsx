@@ -2,7 +2,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Instagram, Youtube, Facebook, Mail, Phone, MapPin } from 'lucide-react';
-import { BRAND } from '../constants';
+import { BRAND } from '../constants.tsx';
 
 const Footer: React.FC = () => {
   return (

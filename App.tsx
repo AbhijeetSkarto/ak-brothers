@@ -2,20 +2,20 @@
 import React, { useLayoutEffect, useRef } from 'react';
 import { HashRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import ScrollToTop from './components/ScrollToTop';
-import Home from './pages/Home';
-import Contact from './pages/Contact';
-import FAQ from './pages/FAQ';
-import Admin from './pages/Admin';
-import DynamicCategory from './pages/DynamicCategory';
-import Images from './pages/Images';
-import Films from './pages/Films';
-import Stories from './pages/Stories';
-import Photobooks from './pages/Photobooks';
-import PreWeddings from './pages/PreWeddings';
-import { NAV_SECTIONS } from './constants';
+import Navbar from './components/Navbar.tsx';
+import Footer from './components/Footer.tsx';
+import ScrollToTop from './components/ScrollToTop.tsx';
+import Home from './pages/Home.tsx';
+import Contact from './pages/Contact.tsx';
+import FAQ from './pages/FAQ.tsx';
+import Admin from './pages/Admin.tsx';
+import DynamicCategory from './pages/DynamicCategory.tsx';
+import Images from './pages/Images.tsx';
+import Films from './pages/Films.tsx';
+import Stories from './pages/Stories.tsx';
+import Photobooks from './pages/Photobooks.tsx';
+import PreWeddings from './pages/PreWeddings.tsx';
+import { NAV_SECTIONS } from './constants.tsx';
 
 const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const containerRef = useRef<HTMLDivElement>(null);

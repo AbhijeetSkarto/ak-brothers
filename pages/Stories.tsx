@@ -1,10 +1,12 @@
 
 import React from 'react';
 import InstagramGrid, { MediaItem } from '../components/InstagramGrid.tsx';
-import { GALLERY_DATABASE } from '../constants.tsx';
+import { useContent } from '../context/ContentContext.tsx';
 
 const Stories: React.FC = () => {
-  const storyData: MediaItem[] = GALLERY_DATABASE.stories.map((img, i) => ({
+  const { content } = useContent();
+  
+  const storyData: MediaItem[] = content.stories.map((img, i) => ({
     id: `story-${i}`,
     type: 'image',
     thumbnail: img,
@@ -14,7 +16,7 @@ const Stories: React.FC = () => {
   }));
 
   return (
-    <div className="pt-24 min-h-screen bg-obsidian">
+    <div className="pt-24 min-h-screen bg-cream">
       <InstagramGrid 
         items={storyData} 
         title="Wedding Journals" 

@@ -11,12 +11,22 @@ export const BRAND = {
 
 export const WHATSAPP_NUMBER = '917566075512';
 
+export const THEME_EFFECTS = {
+  natural: '',
+  noir: 'grayscale contrast-125',
+  vintage: 'sepia-[.3] contrast-[0.9] brightness-110',
+  vivid: 'saturate-[1.4] contrast-110',
+  matte: 'brightness-110 contrast-90 saturate-[0.8]',
+};
+
 export const NAV_SECTIONS = [
   { name: 'Stories', path: '/stories' },
   { name: 'Portraits', path: '/images' },
   { name: 'Films', path: '/films' },
   { name: 'Photobooks', path: '/photobooks' },
   { name: 'Pre-Weddings', path: '/pre-weddings' },
+  { name: 'About Us', path: '/about' },
+  { name: 'Office', path: '/office' },
 ];
 
 export const GALLERY_DATABASE = {

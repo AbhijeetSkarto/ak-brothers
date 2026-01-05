@@ -25,28 +25,28 @@ const FAQ: React.FC = () => {
   const [openIdx, setOpenIdx] = useState<number | null>(0);
 
   return (
-    <div className="pt-32 pb-40 bg-obsidian min-h-screen">
+    <div className="pt-32 pb-40 bg-cream min-h-screen">
       <div className="container mx-auto px-6 max-w-4xl">
         <div className="text-center mb-20">
-          <h1 className="font-cinzel text-5xl text-silver mb-6 uppercase tracking-[0.1em]">Inquiry Center</h1>
+          <h1 className="font-cinzel text-5xl text-obsidian mb-6 uppercase tracking-[0.1em]">Inquiry Center</h1>
           <div className="w-20 h-[1px] bg-gold mx-auto mb-10" />
-          <p className="text-platinum/60 font-light">Everything you need to know about working with AK BROTHERS.</p>
+          <p className="text-charcoal/60 font-light">Everything you need to know about working with AK BROTHERS.</p>
         </div>
 
         <div className="space-y-4">
           {FAQS.map((faq, idx) => (
-            <div key={idx} className="border border-white/5 bg-charcoal/30 overflow-hidden">
+            <div key={idx} className="border border-black/5 bg-white/50 overflow-hidden">
               <button 
                 onClick={() => setOpenIdx(openIdx === idx ? null : idx)}
-                className="w-full flex items-center justify-between p-8 text-left transition-colors hover:bg-white/5"
+                className="w-full flex items-center justify-between p-8 text-left transition-colors hover:bg-black/5"
               >
-                <span className="font-cinzel text-lg text-silver">{faq.q}</span>
+                <span className="font-cinzel text-lg text-obsidian">{faq.q}</span>
                 <span className="text-gold">
                   {openIdx === idx ? <Minus size={20} /> : <Plus size={20} />}
                 </span>
               </button>
               <div className={`transition-all duration-500 ease-in-out ${openIdx === idx ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
-                <div className="p-8 pt-0 text-platinum font-light leading-relaxed border-t border-white/5">
+                <div className="p-8 pt-0 text-charcoal/80 font-light leading-relaxed border-t border-black/5">
                   {faq.a}
                 </div>
               </div>
@@ -54,9 +54,9 @@ const FAQ: React.FC = () => {
           ))}
         </div>
 
-        <div className="mt-20 p-12 text-center border-t border-white/5">
-           <h3 className="font-cinzel text-silver mb-4 uppercase tracking-widest">Still have questions?</h3>
-           <p className="text-platinum/50 mb-8 text-sm">Our concierge team is available 24/7 for consultation.</p>
+        <div className="mt-20 p-12 text-center border-t border-black/5">
+           <h3 className="font-cinzel text-obsidian mb-4 uppercase tracking-widest">Still have questions?</h3>
+           <p className="text-charcoal/50 mb-8 text-sm">Our concierge team is available 24/7 for consultation.</p>
            <a href={`mailto:hello@akbrothers.com`} className="text-gold font-cinzel text-xs tracking-widest uppercase border-b border-gold/40 pb-1 hover:border-gold transition-all">Contact Support</a>
         </div>
       </div>

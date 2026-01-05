@@ -17,60 +17,84 @@ const Navbar: React.FC = () => {
 
   useEffect(() => setIsOpen(false), [location.pathname]);
 
+  // Filter out Office from the main list to use it as a button
+  const centerLinks = NAV_SECTIONS.filter(link => link.path !== '/office');
+
+  // Logic for text color
+  const isHome = location.pathname === '/';
+  const textColor = (isHome && !isScrolled) ? 'text-white' : 'text-obsidian';
+  const logoTextSilver = (isHome && !isScrolled) ? 'text-silver' : 'text-obsidian';
+  const logoTextPlatinum = (isHome && !isScrolled) ? 'text-platinum/60' : 'text-charcoal/60';
+  const borderColor = (isHome && !isScrolled) ? 'border-white/20' : 'border-obsidian/20';
+
   return (
-    <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-700 ${isScrolled ? 'bg-obsidian/90 backdrop-blur-xl py-4 border-b border-white/5' : 'bg-transparent py-8'}`}>
+    <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-700 ${isScrolled ? 'bg-cream/90 backdrop-blur-xl py-2 border-b border-black/5 shadow-sm' : 'bg-transparent py-6'}`}>
       <div className="container mx-auto px-6 flex justify-between items-center">
-        <Link to="/" className="flex items-center gap-4 group">
+        
+        {/* LEFT: Logo + Brand Text */}
+        <Link to="/" className="flex items-center gap-3 group">
           <img 
             src={BRAND.logo} 
             alt="AK BROTHERS" 
-            className={`transition-all duration-500 ${isScrolled ? 'h-10' : 'h-14'} group-hover:scale-105`}
+            className={`transition-all duration-500 ${isScrolled ? 'h-10' : 'h-12'} group-hover:scale-105`}
           />
-          <span className="hidden sm:block font-cinzel text-xs tracking-[0.4em] text-silver group-hover:text-gold transition-colors">AK BROTHERS</span>
+          <div className="hidden sm:flex flex-col justify-center">
+            <span className={`font-cinzel text-[10px] tracking-[0.3em] leading-tight group-hover:text-gold transition-colors ${logoTextSilver}`}>AK BROTHERS</span>
+            <span className={`font-cinzel text-[8px] tracking-[0.5em] leading-tight ${logoTextPlatinum}`}>PHOTOGRAPHY</span>
+          </div>
         </Link>
 
-        <div className="hidden lg:flex items-center space-x-10">
-          {NAV_SECTIONS.map((link) => (
+        {/* CENTER: Navigation Links */}
+        <div className="hidden lg:flex items-center space-x-8">
+          {centerLinks.map((link) => (
             <Link
               key={link.path}
               to={link.path}
-              className={`font-cinzel text-[10px] tracking-[0.2em] uppercase transition-all hover:text-gold ${location.pathname === link.path ? 'text-gold' : 'text-platinum/60'}`}
+              className={`font-cinzel text-[10px] tracking-[0.2em] uppercase transition-all hover:text-gold hover:scale-105 ${location.pathname === link.path ? 'text-gold' : textColor}`}
             >
               {link.name}
             </Link>
           ))}
+        </div>
+
+        {/* RIGHT: Boxed Office Button */}
+        <div className="hidden lg:flex items-center gap-6">
           <Link 
-            to="/contact" 
-            className="bg-gold/10 border border-gold/40 px-6 py-2 text-[10px] tracking-[0.3em] uppercase text-gold hover:bg-gold hover:text-obsidian transition-all"
+            to="/office" 
+            className={`block border px-8 py-3 text-[10px] tracking-[0.2em] uppercase font-cinzel hover:bg-gold hover:text-white hover:border-gold transition-all duration-500 ${borderColor} ${textColor}`}
           >
-            Connect
+            Office
           </Link>
         </div>
 
-        <button onClick={() => setIsOpen(!isOpen)} className="lg:hidden text-gold hover:scale-110 transition-transform">
-          {isOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {/* Mobile Menu Toggle */}
+        <div className="lg:hidden flex items-center gap-5">
+           <button onClick={() => setIsOpen(!isOpen)} className="text-gold hover:scale-110 transition-transform">
+             {isOpen ? <X size={24} /> : <Menu size={24} />}
+           </button>
+        </div>
       </div>
 
-      <div className={`fixed inset-0 bg-obsidian z-[110] flex flex-col items-center justify-center space-y-10 transition-transform duration-700 lg:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+      {/* Mobile Menu Overlay */}
+      <div className={`fixed inset-0 bg-cream z-[110] flex flex-col items-center justify-center space-y-10 transition-transform duration-700 lg:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
         <button onClick={() => setIsOpen(false)} className="absolute top-10 right-10 text-gold p-2">
           <X size={32} />
         </button>
-        <Link to="/" className="font-cinzel text-2xl tracking-[0.4em] uppercase text-silver hover:text-gold">Home</Link>
-        {NAV_SECTIONS.map((link) => (
+        <Link to="/" className="font-cinzel text-2xl tracking-[0.4em] uppercase text-obsidian hover:text-gold">Home</Link>
+        {centerLinks.map((link) => (
           <Link
             key={link.path}
             to={link.path}
-            className="font-cinzel text-2xl tracking-[0.4em] uppercase text-silver hover:text-gold"
+            className="font-cinzel text-xl tracking-[0.3em] uppercase text-obsidian hover:text-gold"
           >
             {link.name}
           </Link>
         ))}
         <Link 
-          to="/contact" 
-          className="border border-gold px-12 py-4 text-sm tracking-[0.4em] uppercase text-gold hover:bg-gold hover:text-obsidian"
+          to="/office" 
+          className="border border-gold px-12 py-4 text-sm tracking-[0.4em] uppercase text-gold hover:bg-gold hover:text-white transition-all"
         >
-          Book Now
+          Office
         </Link>
       </div>
     </nav>

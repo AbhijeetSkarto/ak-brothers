@@ -29,11 +29,11 @@ const DynamicCategory: React.FC<DynamicCategoryProps> = ({ title, subtitle }) =>
   }));
 
   return (
-    <div className="pt-40 min-h-screen bg-obsidian">
+    <div className="pt-40 min-h-screen bg-cream">
       <section className="px-4 md:px-10 lg:px-20 mb-20">
         <div className="container mx-auto" ref={headerRef}>
           <div className="overflow-hidden mb-8">
-            <h2 className="font-cinzel text-5xl md:text-8xl text-silver tracking-tighter reveal-text">
+            <h2 className="font-cinzel text-5xl md:text-8xl text-obsidian tracking-tighter reveal-text">
               {title} <span className="text-gold italic">Art</span>
             </h2>
           </div>

@@ -27,7 +27,7 @@ export const NAV_SECTIONS = [
   { name: 'Pre-Weddings', path: '/pre-weddings' },
   { name: 'Special Highlights', path: '/special' },
   { name: 'About Us', path: '/about' },
-  { name: 'Contact Us', path: '/Contact Us' },
+  { name: 'Contact', path: '/office' },
 ];
 
 export const GALLERY_DATABASE = {

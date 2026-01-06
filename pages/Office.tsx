@@ -20,8 +20,8 @@ const Office: React.FC = () => {
         
         {/* Header */}
         <div className="text-center mb-24">
-            <span className="text-gold font-cinzel text-xs tracking-[1em] uppercase block mb-6">Headquarters</span>
-            <h1 className="font-cinzel text-6xl md:text-8xl text-obsidian tracking-tighter leading-none mb-4">THE OFFICE</h1>
+            <span className="text-gold font-cinzel text-xs tracking-[1em] uppercase block mb-6">Get In Touch</span>
+            <h1 className="font-cinzel text-6xl md:text-8xl text-obsidian tracking-tighter leading-none mb-4">CONTACT US</h1>
             <div className="w-24 h-[1px] bg-gold mx-auto opacity-50 mt-10" />
         </div>
 

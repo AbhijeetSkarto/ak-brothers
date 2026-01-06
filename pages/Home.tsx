@@ -16,7 +16,8 @@ const Home: React.FC = () => {
   useLayoutEffect(() => {
     const ctx = gsap.context(() => {
       // Hero Animations
-      gsap.from('.hero-word-1 .hero-letter', { opacity: 0, y: 100, rotateX: -90, stagger: 0.05, duration: 1.2, ease: 'expo.out', delay: 0.2 });
+      gsap.from('.hero-subtitle', { opacity: 0, y: 20, duration: 1, delay: 0.2, ease: 'power2.out' });
+      gsap.from('.hero-word-1 .hero-letter', { opacity: 0, y: 100, rotateX: -90, stagger: 0.05, duration: 1.2, ease: 'expo.out', delay: 0.4 });
       gsap.from('.hero-word-2 .hero-letter', { opacity: 0, y: 100, rotateX: -90, stagger: 0.05, duration: 1.2, ease: 'expo.out', delay: 0.8 }); 
       gsap.from('.hero-btns', { opacity: 0, y: 30, duration: 1, delay: 1.5, ease: 'power3.out' });
       
@@ -46,93 +47,46 @@ const Home: React.FC = () => {
   };
 
   const renderHeroContent = () => {
-    if (content.homeLayout === 'editorial') {
-        return (
-          <div className="relative min-h-[100dvh] flex flex-col md:flex-row bg-cream">
-             <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-12 order-2 md:order-1 z-10">
-                <div className="text-left w-full">
-                   <h1 className="flex flex-row flex-nowrap gap-3 md:gap-4 mb-8 leading-none items-baseline w-full overflow-hidden">
-                     <div className="hero-word-1 font-cinzel text-xl sm:text-5xl md:text-7xl text-obsidian tracking-tighter whitespace-nowrap">
-                       {renderLetters(content.heroTitle)}
-                     </div>
-                     <div className="hero-word-2 font-cinzel text-lg sm:text-4xl md:text-7xl text-gold italic tracking-tight whitespace-nowrap">
-                       {renderLetters(content.heroSubtitle, "italic")}
-                     </div>
-                   </h1>
-                   <div className="hero-btns flex flex-col sm:flex-row gap-4 md:gap-6">
-                     <Link to="/stories" className="text-center border border-obsidian px-6 py-3 md:px-8 text-obsidian font-cinzel text-[10px] tracking-[0.3em] uppercase hover:bg-obsidian hover:text-white transition-all">
-                       View Stories
-                     </Link>
-                     <Link to="/contact" className="text-center bg-gold px-6 py-3 md:px-8 text-white font-cinzel text-[10px] tracking-[0.3em] uppercase hover:bg-obsidian transition-all">
-                       Inquiry
-                     </Link>
-                   </div>
-                </div>
-             </div>
-             <div className="w-full md:w-1/2 h-[50vh] md:h-auto relative overflow-hidden order-1 md:order-2">
-                <div className={`absolute inset-0 bg-cover bg-center transition-all duration-700 ${getHeroEffect()}`} style={{ backgroundImage: `url(${content.heroImage})` }} />
-             </div>
-          </div>
-        );
-    }
-    
-    if (content.homeLayout === 'framed') {
-        return (
-          <section className="relative min-h-[100dvh] flex items-center justify-center bg-cream p-4 md:p-12">
-            <div className={`absolute inset-4 md:inset-12 bg-cover bg-center shadow-2xl ${getHeroEffect()}`} style={{ backgroundImage: `url(${content.heroImage})` }}>
-              <div className="absolute inset-0 bg-black/30" />
-            </div>
-            
-            <div className="relative z-10 text-center w-full max-w-[1400px] px-4">
-              <h1 className="flex flex-row flex-nowrap justify-center items-baseline gap-x-3 sm:gap-x-6 gap-y-2 mb-8 md:mb-12 leading-none mix-blend-overlay w-full">
-                <div className="hero-word-1 font-cinzel text-lg sm:text-5xl md:text-8xl xl:text-9xl text-white/90 tracking-tighter whitespace-nowrap">
-                  {renderLetters(content.heroTitle)}
-                </div>
-                <div className="hero-word-2 font-cinzel text-base sm:text-4xl md:text-8xl xl:text-9xl text-white/80 italic tracking-tight whitespace-nowrap">
-                  {renderLetters(content.heroSubtitle, "italic")}
-                </div>
-              </h1>
-              <div className="hero-btns flex flex-col sm:flex-row justify-center gap-4 md:gap-6">
-                 <Link to="/stories" className="bg-white/10 backdrop-blur-md border border-white/40 text-white px-8 py-3 md:px-10 md:py-4 font-cinzel text-[10px] md:text-[11px] tracking-[0.4em] uppercase hover:bg-white hover:text-obsidian transition-all">
-                   View Stories
-                 </Link>
-                 <Link to="/contact" className="bg-white text-obsidian px-8 py-3 md:px-12 md:py-4 font-cinzel text-[10px] md:text-[11px] tracking-[0.4em] uppercase hover:bg-gold hover:text-white transition-all shadow-xl">
-                   Inquiry
-                 </Link>
-              </div>
-            </div>
-          </section>
-        );
-    }
-
-    // Default: Classic
+    // Default: Classic Layout as per screenshot pattern
     return (
       <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
         <div className={`absolute inset-0 bg-cover bg-center opacity-90 scale-105 transition-all duration-700 ${getHeroEffect()}`} style={{ backgroundImage: `url(${content.heroImage})` }} />
-        <div className="absolute inset-0 bg-gradient-to-t from-cream via-obsidian/40 to-black/30" />
+        {/* Dark overlay for text readability */}
+        <div className="absolute inset-0 bg-black/40" />
         
-        <div className="relative z-10 text-center px-4 w-full max-w-[1600px] mx-auto">
-          <h1 className="flex flex-row flex-nowrap justify-center items-baseline gap-x-3 sm:gap-x-6 mb-8 md:mb-12 leading-none w-full">
-            <div className="hero-word-1 font-cinzel text-xl sm:text-5xl md:text-8xl lg:text-9xl text-white tracking-tighter whitespace-nowrap">
-              {renderLetters(content.heroTitle)}
+        <div className="relative z-10 text-center px-4 w-full max-w-[1800px] mx-auto flex flex-col items-center justify-center h-full pt-20">
+          
+          {/* Subtitle */}
+          <div className="hero-subtitle mb-6 md:mb-8 flex items-center gap-4 md:gap-8 opacity-0">
+             {/* Decorative lines/text mimicking the screenshot glitch/style */}
+             <div className="hidden md:block w-12 h-[1px] bg-gold/60"></div>
+             <span className="text-gold font-cinzel text-[10px] md:text-sm tracking-[0.5em] uppercase">Cinematic Legacies</span>
+             <div className="hidden md:block w-12 h-[1px] bg-gold/60"></div>
+          </div>
+
+          {/* Main Title - One Line - Optimized Fluid Typography */}
+          <h1 className="flex flex-row flex-nowrap justify-center items-baseline gap-x-[1.5vw] mb-10 md:mb-16 leading-none w-full max-w-full overflow-hidden px-2">
+            <div className="hero-word-1 font-cinzel text-[clamp(1.1rem,5vw,7rem)] text-white tracking-tighter whitespace-nowrap drop-shadow-2xl">
+              {renderLetters("AK BROTHERS")}
             </div>
-            <div className="hero-word-2 font-cinzel text-lg sm:text-4xl md:text-7xl lg:text-8xl text-gold italic tracking-tight whitespace-nowrap">
-              {renderLetters(content.heroSubtitle, "italic")}
+            <div className="hero-word-2 font-cinzel text-[clamp(1.1rem,5vw,7rem)] text-gold italic tracking-tight whitespace-nowrap drop-shadow-2xl">
+              {renderLetters("PHOTOGRAPHY", "italic")}
             </div>
           </h1>
 
-          <div className="hero-btns flex flex-col sm:flex-row gap-4 md:gap-6 justify-center items-center mt-8 md:mt-12">
-            <Link to="/stories" className="w-full sm:w-auto border border-white/40 bg-black/20 backdrop-blur-sm px-8 py-4 md:px-10 md:py-4 text-white font-cinzel text-[10px] md:text-[11px] tracking-[0.3em] uppercase hover:bg-white hover:text-obsidian transition-all duration-500 min-w-[200px]">
+          {/* Buttons */}
+          <div className="hero-btns flex flex-col sm:flex-row gap-6 justify-center items-center w-full max-w-md md:max-w-2xl">
+            <Link to="/stories" className="w-full sm:w-1/2 border border-gold/40 hover:border-gold text-white bg-transparent px-8 py-4 font-cinzel text-[10px] md:text-xs tracking-[0.3em] uppercase hover:bg-gold/10 transition-all duration-500">
               View Stories
             </Link>
-            <Link to="/contact" className="w-full sm:w-auto bg-gold border border-gold px-8 py-4 md:px-10 md:py-4 text-obsidian font-cinzel text-[10px] md:text-[11px] tracking-[0.3em] uppercase hover:bg-transparent hover:text-gold transition-all duration-500 min-w-[200px]">
+            <Link to="/contact" className="w-full sm:w-1/2 bg-gold border border-gold px-8 py-4 text-obsidian font-cinzel text-[10px] md:text-xs tracking-[0.3em] uppercase hover:bg-white hover:border-white hover:text-obsidian transition-all duration-500 shadow-xl">
               Inquiry
             </Link>
           </div>
         </div>
-        <div className="absolute bottom-6 md:bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 opacity-30">
-          <div className="w-[1px] h-8 md:h-12 bg-gradient-to-b from-gold to-transparent animate-pulse" />
-        </div>
+        
+        {/* Bottom decorative element */}
+        <div className="absolute bottom-10 left-1/2 -translate-x-1/2 w-[1px] h-16 bg-gradient-to-b from-white/20 to-transparent"></div>
       </section>
     );
   };

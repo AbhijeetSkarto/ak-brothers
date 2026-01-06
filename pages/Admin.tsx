@@ -278,7 +278,7 @@ const Admin: React.FC = () => {
                { id: 'portfolio', icon: ImageIcon, label: 'Photos' },
                { id: 'films', icon: Video, label: 'Films' },
                { id: 'about', icon: User, label: 'About Us' },
-               { id: 'contact', icon: Phone, label: 'Contact Info' },
+               { id: 'contact', icon: Phone, label: 'Contact Page' },
                { id: 'security', icon: Shield, label: 'Security' },
              ].map((tab) => (
                <button
@@ -576,7 +576,7 @@ const Admin: React.FC = () => {
             {/* --- CONTACT SECTION --- */}
             {activeTab === 'contact' && (
                <div className="bg-white p-8 border border-black/5 shadow-sm space-y-6">
-                   <h3 className="font-cinzel text-lg mb-6">Contact Information</h3>
+                   <h3 className="font-cinzel text-lg mb-6">Contact Page Details</h3>
                    
                    <div>
                       <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Phone Number</label>

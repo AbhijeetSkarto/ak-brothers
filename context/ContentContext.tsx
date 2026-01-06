@@ -1,6 +1,9 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { GALLERY_DATABASE, BRAND } from '../constants.tsx';
+import { db, storage } from '../firebase.ts';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 
 // Define the shape of our content
 export type VisualEffect = 'natural' | 'noir' | 'vintage' | 'vivid' | 'matte';
@@ -16,7 +19,7 @@ interface SiteContent {
   // Security
   adminCredentials: {
     username: string;
-    pass: string; // 'pass' to avoid confusion with internal props
+    pass: string; 
   };
 
   // Galleries
@@ -24,7 +27,7 @@ interface SiteContent {
   stories: string[];
   preWeddings: string[];
   photobooks: string[];
-  special: string[]; // New Collection
+  special: string[]; 
   
   // Complex Data
   films: { title: string; url: string; thumbnail: string }[];
@@ -57,102 +60,141 @@ interface ContentContextType {
   updateCredentials: (username: string, pass: string) => void;
   uploadImage: (file: File) => Promise<string>;
   resetContent: () => void;
-  saveContent: () => void; // Manual save trigger
-  hasUnsavedChanges: boolean; // Tracking state
-  saveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  saveContent: () => void; 
+  hasUnsavedChanges: boolean; 
+  saveStatus: 'idle' | 'saving' | 'saved' | 'error' | 'offline-demo';
 }
 
 const ContentContext = createContext<ContentContextType | undefined>(undefined);
 
-const STORAGE_KEY = 'ak_brothers_content_v4';
-
+// Initial State (Fallbacks)
 const INITIAL_CONTENT: SiteContent = {
   heroImage: BRAND.heroBg,
   heroTitle: 'AK BROTHERS',
   heroSubtitle: 'PHOTOGRAPHY',
   globalEffect: 'natural',
   homeLayout: 'classic',
-  
-  adminCredentials: {
-    username: 'admin',
-    pass: 'akbrothers'
-  },
-
+  adminCredentials: { username: 'admin', pass: 'akbrothers' },
   portraits: [...GALLERY_DATABASE.portraits],
   stories: [...GALLERY_DATABASE.stories],
   preWeddings: [...GALLERY_DATABASE.preWeddings],
   photobooks: [...GALLERY_DATABASE.photobooks],
-  special: [], // Initialize new collection
-  
-  films: GALLERY_DATABASE.films.map((f, i) => ({
-    ...f,
-    thumbnail: GALLERY_DATABASE.stories[i % GALLERY_DATABASE.stories.length]
-  })),
-
+  special: [], 
+  films: GALLERY_DATABASE.films.map((f, i) => ({ ...f, thumbnail: GALLERY_DATABASE.stories[i % GALLERY_DATABASE.stories.length] })),
   about: {
-    title: 'AK BROTHERS',
-    subtitle: 'The Creators',
-    description: "We are storytellers at heart. At AK Brothers, we don't just capture weddings; we archive history. Our philosophy is rooted in the belief that every couple has a unique rhythm, a visual language that deserves to be spoken through lens and light. Based in Bhopal but traveling globally, our team specializes in high-contrast, emotive cinematography that feels less like a wedding video and more like a cinematic legacy.",
+    title: 'AK BROTHERS PHOTOGRAPHY',
+    subtitle: 'Crafting Timeless Stories',
+    description: `AK Brothers Photography is a premium photography brand founded by Akash, built on a simple belief — every moment deserves to be remembered beautifully.\nWe don’t just take photographs; we create visual stories that live forever.\n\nWith a sharp eye for detail, cinematic lighting, and an artistic approach, AK Brothers Photography specializes in capturing emotions exactly the way they are — real, powerful, and timeless.\n\nOUR PHILOSOPHY\nPhotography is not about poses.\nIt’s about feelings, expressions, and moments you can relive again and again.`,
     images: [BRAND.heroBg],
     videos: []
   },
-
-  contact: {
-    email: BRAND.email,
-    phone: BRAND.phone,
-    address: BRAND.address,
-    instagram: BRAND.instagram
-  }
+  contact: { email: BRAND.email, phone: BRAND.phone, address: BRAND.address, instagram: BRAND.instagram }
 };
 
 export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [content, setContent] = useState<SiteContent>(INITIAL_CONTENT);
-  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'offline-demo'>('idle');
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+  const [isFirebaseAvailable, setIsFirebaseAvailable] = useState(false);
 
-  // Load from LocalStorage
+  // Check if Firebase keys are present
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY);
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        
-        // Data Migration
-        if (parsed.about) {
-           if (parsed.about.image && (!parsed.about.images || parsed.about.images.length === 0)) {
-               parsed.about.images = [parsed.about.image];
-           }
-           if (!parsed.about.images) {
-               parsed.about.images = [BRAND.heroBg];
-           }
-           if (!parsed.about.videos) {
-               parsed.about.videos = [];
-           }
-        }
-        if (!parsed.special) {
-          parsed.special = [];
-        }
-
-        // Ensure new fields exist if loading old data
-        if (!parsed.adminCredentials) parsed.adminCredentials = INITIAL_CONTENT.adminCredentials;
-        
-        setContent(prev => ({ ...prev, ...parsed }));
-      }
-    } catch (error) {
-      console.error("Failed to load backend data", error);
+    const meta = import.meta as any;
+    const env = meta.env || {};
+    
+    if (env.VITE_API_KEY) {
+      setIsFirebaseAvailable(true);
+    } else {
+      console.warn("Firebase API keys missing. Running in Offline Demo Mode (localStorage).");
+      setSaveStatus('offline-demo');
     }
   }, []);
 
-  // Manual Save Function
+  // LOAD DATA: Fetch from Firebase (or LocalStorage fallback)
+  useEffect(() => {
+    const loadContent = async () => {
+      // 1. Try Firebase first
+      if (isFirebaseAvailable && db) {
+        try {
+          const docRef = doc(db, "content", "main");
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+             // Merge with initial to ensure structure integretity
+             setContent(prev => ({ ...prev, ...docSnap.data() as SiteContent }));
+             return;
+          }
+        } catch (err) {
+          console.error("Firebase Load Error:", err);
+        }
+      }
+
+      // 2. Fallback to LocalStorage
+      try {
+        const saved = localStorage.getItem('ak_brothers_content_v5');
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          setContent(prev => ({ ...prev, ...parsed }));
+        }
+      } catch (error) {
+        console.error("LocalStorage Load Error", error);
+      }
+    };
+
+    loadContent();
+  }, [isFirebaseAvailable]);
+
+  // SAVE DATA: Write to Firebase (and LocalStorage)
   const saveContent = async () => {
     setSaveStatus('saving');
+    
+    // Always save to LocalStorage as backup
     try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(content));
+      localStorage.setItem('ak_brothers_content_v5', JSON.stringify(content));
+    } catch(e) { console.error("LS Save Fail", e); }
+
+    if (isFirebaseAvailable && db) {
+      try {
+        await setDoc(doc(db, "content", "main"), content);
+        setSaveStatus('saved');
+        setTimeout(() => setSaveStatus('idle'), 2000);
+        setHasUnsavedChanges(false);
+      } catch (error) {
+        console.error("Firebase Save Error", error);
+        setSaveStatus('error');
+      }
+    } else {
+      // Offline mode success
       setTimeout(() => setSaveStatus('saved'), 500);
-      setTimeout(() => setSaveStatus('idle'), 2000);
+      setTimeout(() => setSaveStatus('offline-demo'), 2000);
       setHasUnsavedChanges(false);
+    }
+  };
+
+  // UPLOAD IMAGE: Upload to Firebase Storage
+  const uploadImage = async (file: File): Promise<string> => {
+    if (!isFirebaseAvailable || !storage) {
+      // Fallback: Base64 (Not recommended for prod, but works for demo)
+      return new Promise((resolve, reject) => {
+        if (file.size > 2 * 1024 * 1024) {
+          alert("Demo Mode: Image must be under 2MB");
+          reject(new Error("File too large"));
+          return;
+        }
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+      });
+    }
+
+    try {
+      const storageRef = ref(storage, `uploads/${Date.now()}-${file.name}`);
+      const snapshot = await uploadBytes(storageRef, file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      return downloadURL;
     } catch (error) {
-      setSaveStatus('error');
+      console.error("Upload failed", error);
+      throw error;
     }
   };
 
@@ -189,25 +231,11 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
   };
 
   const resetContent = () => {
-    if (window.confirm("Are you sure you want to reset all content (including passwords) to default?")) {
+    if (window.confirm("Are you sure you want to reset all content to default?")) {
       setContent(INITIAL_CONTENT);
-      localStorage.removeItem(STORAGE_KEY);
-      setHasUnsavedChanges(false);
+      localStorage.removeItem('ak_brothers_content_v5');
+      setHasUnsavedChanges(true); // Mark as changed so we can save the reset to Firebase
     }
-  };
-
-  const uploadImage = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      if (file.size > 2 * 1024 * 1024) {
-        alert("For demo, please use images under 2MB.");
-        reject(new Error("File too large"));
-        return;
-      }
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = error => reject(error);
-    });
   };
 
   return (
@@ -224,7 +252,7 @@ export const ContentProvider: React.FC<{ children: ReactNode }> = ({ children })
       uploadImage, 
       resetContent, 
       saveContent,
-      hasUnsavedChanges,
+      hasUnsavedChanges, 
       saveStatus 
     }}>
       {children}

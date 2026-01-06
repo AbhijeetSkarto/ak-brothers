@@ -20,64 +20,43 @@ const Navbar: React.FC = () => {
   // Filter out Office from the main list to use it as a button
   const centerLinks = NAV_SECTIONS.filter(link => link.path !== '/office');
 
-  // Logic for text color
+  // Logic for text color & logo visibility
   const isHome = location.pathname === '/';
-  const textColor = (isHome && !isScrolled) ? 'text-white' : 'text-obsidian';
-  const logoTextSilver = (isHome && !isScrolled) ? 'text-silver' : 'text-obsidian';
-  const logoTextPlatinum = (isHome && !isScrolled) ? 'text-platinum/60' : 'text-charcoal/60';
-  const borderColor = (isHome && !isScrolled) ? 'border-white/20' : 'border-obsidian/20';
+  const isTransparent = isHome && !isScrolled;
+
+  // Invert logo color (White -> Black) when on light background
+  const logoFilter = isTransparent ? '' : 'invert';
+  const menuColor = isTransparent ? 'text-white' : 'text-gold';
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-700 ${isScrolled ? 'bg-cream/90 backdrop-blur-xl py-2 border-b border-black/5 shadow-sm' : 'bg-transparent py-6'}`}>
-      <div className="container mx-auto px-6 flex justify-between items-center">
+    <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-700 ${isScrolled ? 'bg-cream/90 backdrop-blur-xl py-4 border-b border-black/5 shadow-sm' : 'bg-transparent py-6'}`}>
+      <div className="container mx-auto px-6 h-full flex items-center justify-between relative">
         
-        {/* LEFT: Logo + Brand Text */}
-        <Link to="/" className="flex items-center gap-3 group">
-          <img 
-            src={BRAND.logo} 
-            alt="AK BROTHERS" 
-            className={`transition-all duration-500 ${isScrolled ? 'h-10' : 'h-12'} group-hover:scale-105`}
-          />
-          <div className="hidden sm:flex flex-col justify-center">
-            <span className={`font-cinzel text-[10px] tracking-[0.3em] leading-tight group-hover:text-gold transition-colors ${logoTextSilver}`}>AK BROTHERS</span>
-            <span className={`font-cinzel text-[8px] tracking-[0.5em] leading-tight ${logoTextPlatinum}`}>PHOTOGRAPHY</span>
-          </div>
-        </Link>
-
-        {/* CENTER: Navigation Links */}
-        <div className="hidden lg:flex items-center space-x-8">
-          {centerLinks.map((link) => (
-            <Link
-              key={link.path}
-              to={link.path}
-              className={`font-cinzel text-[10px] tracking-[0.2em] uppercase transition-all hover:text-gold hover:scale-105 ${location.pathname === link.path ? 'text-gold' : textColor}`}
-            >
-              {link.name}
-            </Link>
-          ))}
-        </div>
-
-        {/* RIGHT: Boxed Office Button */}
-        <div className="hidden lg:flex items-center gap-6">
-          <Link 
-            to="/office" 
-            className={`block border px-8 py-3 text-[10px] tracking-[0.2em] uppercase font-cinzel hover:bg-gold hover:text-white hover:border-gold transition-all duration-500 ${borderColor} ${textColor}`}
-          >
-            Office
+        {/* CENTER: Logo (Absolute positioning for true center) */}
+        <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20">
+          <Link to="/" className="block group">
+            <img 
+              src={BRAND.logo} 
+              alt="AK BROTHERS" 
+              className={`transition-all duration-500 ${isScrolled ? 'h-12' : 'h-16'} group-hover:scale-105 ${logoFilter}`}
+            />
           </Link>
         </div>
 
-        {/* Mobile Menu Toggle */}
-        <div className="lg:hidden flex items-center gap-5">
-           <button onClick={() => setIsOpen(!isOpen)} className="text-gold hover:scale-110 transition-transform">
-             {isOpen ? <X size={24} /> : <Menu size={24} />}
+        {/* LEFT: Spacer to balance layout */}
+        <div></div>
+
+        {/* RIGHT: Hamburger Menu (Always Visible) */}
+        <div className="flex items-center gap-5 z-20">
+           <button onClick={() => setIsOpen(!isOpen)} className={`${menuColor} hover:scale-110 transition-transform`}>
+             {isOpen ? <X size={28} className="text-obsidian" /> : <Menu size={28} />}
            </button>
         </div>
       </div>
 
-      {/* Mobile Menu Overlay */}
-      <div className={`fixed inset-0 bg-cream z-[110] flex flex-col items-center justify-center space-y-10 transition-transform duration-700 lg:hidden ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <button onClick={() => setIsOpen(false)} className="absolute top-10 right-10 text-gold p-2">
+      {/* FULL SCREEN MENU OVERLAY */}
+      <div className={`fixed inset-0 bg-cream z-[110] flex flex-col items-center justify-center space-y-10 transition-transform duration-700 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
+        <button onClick={() => setIsOpen(false)} className="absolute top-10 right-10 text-gold p-2 hover:rotate-90 transition-transform">
           <X size={32} />
         </button>
         <Link to="/" className="font-cinzel text-2xl tracking-[0.4em] uppercase text-obsidian hover:text-gold">Home</Link>

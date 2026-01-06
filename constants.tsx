@@ -25,6 +25,7 @@ export const NAV_SECTIONS = [
   { name: 'Films', path: '/films' },
   { name: 'Photobooks', path: '/photobooks' },
   { name: 'Pre-Weddings', path: '/pre-weddings' },
+  { name: 'Special Highlights', path: '/special' },
   { name: 'About Us', path: '/about' },
   { name: 'Office', path: '/office' },
 ];
@@ -60,6 +61,11 @@ export const GALLERY_DATABASE = {
     { title: 'The Royal Wedding of Bhopal', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
     { title: 'Eternal Vows at Lake View', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
     { title: 'Golden Hour Memories', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+    { title: 'Love in the Pink City', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+    { title: 'A Udaipur Fairytale', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+    { title: 'Monsoon Wedding', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+    { title: 'Sangeet Night Lights', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+    { title: 'The Grand Reception', url: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
   ]
 };
 

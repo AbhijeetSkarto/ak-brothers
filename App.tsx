@@ -59,7 +59,13 @@ const App: React.FC = () => {
                   <Route 
                     key={section.path} 
                     path={section.path} 
-                    element={<DynamicCategory title={section.name} subtitle="Artistic Selection" />} 
+                    element={
+                      <DynamicCategory 
+                        title={section.name} 
+                        subtitle="Artistic Selection" 
+                        collectionId={section.path.substring(1) as any} 
+                      />
+                    } 
                   />
                 ))}
 

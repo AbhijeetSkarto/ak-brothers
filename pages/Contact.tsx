@@ -15,25 +15,25 @@ const Contact: React.FC = () => {
   };
 
   return (
-    <div className="pt-48 pb-32 bg-cream min-h-screen">
+    <div className="pt-32 md:pt-48 pb-20 md:pb-32 bg-cream min-h-screen">
       <div className="container mx-auto px-6">
-        <header className="mb-24">
-           <span className="text-gold font-cinzel text-xs tracking-[1em] uppercase block mb-6">Concierge</span>
-           <h1 className="font-cinzel text-5xl md:text-8xl text-obsidian tracking-tighter leading-none mb-10">
+        <header className="mb-12 md:mb-24">
+           <span className="text-gold font-cinzel text-xs tracking-[1em] uppercase block mb-4 md:mb-6">Concierge</span>
+           <h1 className="font-cinzel text-4xl md:text-8xl text-obsidian tracking-tighter leading-none mb-6 md:mb-10">
              RESERVE <br /><span className="text-gold italic">YOUR DATE</span>
            </h1>
-           <div className="w-24 h-[1px] bg-gold opacity-50" />
+           <div className="w-16 md:w-24 h-[1px] bg-gold opacity-50" />
         </header>
 
-        <div className="grid lg:grid-cols-2 gap-32">
+        <div className="grid lg:grid-cols-2 gap-16 md:gap-32">
           {/* Info Side */}
-          <div className="space-y-20">
+          <div className="space-y-12 md:space-y-20">
             <div>
-              <p className="text-charcoal/70 text-lg font-light leading-relaxed max-w-md mb-12">
+              <p className="text-charcoal/70 text-base md:text-lg font-light leading-relaxed max-w-md mb-8 md:mb-12">
                 We take on a limited number of commissions each year to ensure every film receives the artistic attention it deserves.
               </p>
               
-              <div className="grid md:grid-cols-2 gap-12">
+              <div className="grid md:grid-cols-2 gap-8 md:gap-12">
                 <div className="space-y-2">
                   <h4 className="text-[10px] text-gold font-cinzel tracking-widest uppercase opacity-80">Studio</h4>
                   <p className="text-obsidian text-sm leading-relaxed whitespace-pre-line">{contact.address}</p>
@@ -46,17 +46,17 @@ const Contact: React.FC = () => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4 md:gap-6">
               <button 
                 onClick={handleWhatsApp}
-                className="flex items-center justify-center gap-4 bg-green-600/5 border border-green-600/30 hover:bg-green-600 text-green-700 hover:text-white px-10 py-6 font-cinzel text-[10px] tracking-[0.3em] uppercase transition-all"
+                className="flex items-center justify-center gap-4 bg-green-600/5 border border-green-600/30 hover:bg-green-600 text-green-700 hover:text-white px-8 md:px-10 py-5 md:py-6 font-cinzel text-[10px] tracking-[0.3em] uppercase transition-all"
               >
                 <MessageCircle size={18} /> WhatsApp Concierge
               </button>
               <a 
                 href={contact.instagram}
                 target="_blank"
-                className="flex items-center justify-center gap-4 border border-black/10 hover:border-gold px-10 py-6 font-cinzel text-[10px] tracking-[0.3em] uppercase transition-all text-charcoal hover:bg-gold hover:text-white"
+                className="flex items-center justify-center gap-4 border border-black/10 hover:border-gold px-8 md:px-10 py-5 md:py-6 font-cinzel text-[10px] tracking-[0.3em] uppercase transition-all text-charcoal hover:bg-gold hover:text-white"
               >
                 <Instagram size={18} /> Follow Artistry
               </a>
@@ -64,9 +64,9 @@ const Contact: React.FC = () => {
           </div>
 
           {/* Form Side */}
-          <div className="bg-white p-12 md:p-16 border border-black/5 relative shadow-sm">
+          <div className="bg-white p-8 md:p-16 border border-black/5 relative shadow-sm">
             <div className="absolute top-0 left-0 w-1 h-12 bg-gold" />
-            <form className="space-y-10" onSubmit={(e) => e.preventDefault()}>
+            <form className="space-y-8 md:space-y-10" onSubmit={(e) => e.preventDefault()}>
               <div className="space-y-2">
                 <label className="text-[9px] tracking-[0.4em] uppercase text-charcoal/60 font-cinzel">Full Name</label>
                 <input 
@@ -77,7 +77,7 @@ const Contact: React.FC = () => {
                 />
               </div>
 
-              <div className="grid md:grid-cols-2 gap-10">
+              <div className="grid md:grid-cols-2 gap-8 md:gap-10">
                 <div className="space-y-2">
                   <label className="text-[9px] tracking-[0.4em] uppercase text-charcoal/60 font-cinzel">Email Address</label>
                   <input 
@@ -107,7 +107,7 @@ const Contact: React.FC = () => {
                 />
               </div>
 
-              <button className="w-full bg-gold text-white px-10 py-6 font-cinzel text-[11px] tracking-[0.5em] uppercase hover:bg-obsidian transition-all shadow-xl">
+              <button className="w-full bg-gold text-white px-8 md:px-10 py-5 md:py-6 font-cinzel text-[11px] tracking-[0.5em] uppercase hover:bg-obsidian transition-all shadow-xl">
                 Send Inquiry
               </button>
             </form>

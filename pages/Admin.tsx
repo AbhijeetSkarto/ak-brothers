@@ -1,8 +1,8 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Image as ImageIcon, Video, Settings, User, Phone, Upload, LogOut, RefreshCw, CheckCircle, Trash2, LayoutTemplate, Square, Columns, Palette, Shield, Save, Plus, AlertTriangle } from 'lucide-react';
+import { LayoutDashboard, Image as ImageIcon, Video, Settings, User, Phone, Upload, LogOut, RefreshCw, CheckCircle, Trash2, LayoutTemplate, Square, Columns, Palette, Shield, Save, Plus, AlertTriangle, CloudOff, Loader } from 'lucide-react';
 import { useContent, VisualEffect } from '../context/ContentContext.tsx';
-import { THEME_EFFECTS } from '../constants.tsx';
+import { THEME_EFFECTS, GALLERY_DATABASE } from '../constants.tsx';
 
 const Admin: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -23,7 +23,7 @@ const Admin: React.FC = () => {
     uploadImage, 
     resetContent, 
     saveContent,
-    hasUnsavedChanges,
+    hasUnsavedChanges, 
     saveStatus 
   } = useContent();
   
@@ -33,6 +33,7 @@ const Admin: React.FC = () => {
   // Film Form State
   const [newFilmTitle, setNewFilmTitle] = useState('');
   const [newFilmUrl, setNewFilmUrl] = useState('');
+  const [newFilmThumbnail, setNewFilmThumbnail] = useState('');
 
   // About Video Form State
   const [newAboutVideo, setNewAboutVideo] = useState('');
@@ -109,14 +110,27 @@ const Admin: React.FC = () => {
     updateAbout({ videos: newVideos });
   };
 
+  // Bulk Upload logic
   const handleGridUpload = async (e: React.ChangeEvent<HTMLInputElement>, collection: 'portraits' | 'stories' | 'preWeddings' | 'photobooks' | 'special') => {
-    if (e.target.files && e.target.files[0]) {
+    if (e.target.files && e.target.files.length > 0) {
       setIsUploading(true);
       try {
-        const url = await uploadImage(e.target.files[0]);
-        updateCollection(collection, [url, ...content[collection]]);
+        const files = Array.from(e.target.files) as File[];
+        // Note: In a real app, you might want to limit concurrent uploads
+        const uploadPromises = files.map(file => uploadImage(file).catch(err => {
+           console.error(`Failed to upload ${file.name}`, err);
+           return null;
+        }));
+        
+        const results = await Promise.all(uploadPromises);
+        const validUrls = results.filter((url): url is string => url !== null);
+
+        if (validUrls.length > 0) {
+          updateCollection(collection, [...validUrls, ...content[collection]]);
+        }
       } catch(e) { console.error(e); }
       setIsUploading(false);
+      e.target.value = ''; // Reset input to allow re-uploading same files
     }
   };
 
@@ -133,6 +147,17 @@ const Admin: React.FC = () => {
     }
   };
 
+  const handleNewFilmThumbnailUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setIsUploading(true);
+      try {
+        const url = await uploadImage(e.target.files[0]);
+        setNewFilmThumbnail(url);
+      } catch(e) { console.error(e); }
+      setIsUploading(false);
+    }
+  };
+
   const removeImage = (collection: 'portraits' | 'stories' | 'preWeddings' | 'photobooks' | 'special', index: number) => {
     const newImages = content[collection].filter((_, i) => i !== index);
     updateCollection(collection, newImages);
@@ -140,13 +165,23 @@ const Admin: React.FC = () => {
 
   const addFilm = () => {
     if (newFilmTitle && newFilmUrl) {
+      // Logic: Use uploaded thumbnail, else fallback to first story image, else placeholder
+      const defaultThumb = (content.stories && content.stories.length > 0) 
+        ? content.stories[0] 
+        : 'https://via.placeholder.com/150';
+
+      const thumbToUse = newFilmThumbnail || defaultThumb;
+
       updateFilms([...content.films, { 
         title: newFilmTitle, 
         url: newFilmUrl, 
-        thumbnail: content.stories[0] || 'https://via.placeholder.com/150' 
+        thumbnail: thumbToUse
       }]);
+      
+      // Reset form
       setNewFilmTitle('');
       setNewFilmUrl('');
+      setNewFilmThumbnail('');
     }
   };
 
@@ -189,21 +224,34 @@ const Admin: React.FC = () => {
 
   // --- DASHBOARD ---
   return (
-    <div className="min-h-screen bg-cream pt-24 pb-24">
+    <div className="min-h-screen bg-cream pt-24 pb-24 relative">
       
+      {/* Uploading Overlay */}
+      {isUploading && (
+        <div className="fixed inset-0 z-[100] bg-cream/80 backdrop-blur-sm flex flex-col items-center justify-center">
+            <div className="w-16 h-16 border-4 border-black/10 border-t-gold rounded-full animate-spin mb-6"></div>
+            <p className="font-cinzel text-obsidian tracking-[0.2em] uppercase text-sm animate-pulse">Uploading Media...</p>
+        </div>
+      )}
+
       {/* Save Button */}
       <div className="fixed bottom-8 right-8 z-50 flex items-center gap-4">
+        {saveStatus === 'offline-demo' && (
+           <div className="bg-gray-800 text-white px-6 py-3 rounded-full flex items-center gap-3 shadow-lg opacity-80">
+              <CloudOff size={14} /> <span className="text-[10px] uppercase tracking-widest">Offline Demo Mode</span>
+           </div>
+        )}
         {hasUnsavedChanges ? (
           <button 
             onClick={saveContent}
             className="bg-gold text-obsidian px-8 py-4 rounded-full shadow-2xl flex items-center gap-3 font-cinzel text-xs uppercase tracking-widest hover:scale-105 transition-transform animate-bounce"
           >
-            <Save size={18} /> Save Changes
+            <Save size={18} /> Publish Changes
           </button>
         ) : (
            saveStatus === 'saved' && (
              <div className="bg-green-600 text-white px-6 py-3 rounded-full flex items-center gap-3 shadow-lg">
-                <CheckCircle size={14} /> <span className="text-[10px] uppercase tracking-widest">All Saved</span>
+                <CheckCircle size={14} /> <span className="text-[10px] uppercase tracking-widest">Published Live</span>
              </div>
            )
         )}
@@ -232,334 +280,349 @@ const Admin: React.FC = () => {
                { id: 'about', icon: User, label: 'About Us' },
                { id: 'contact', icon: Phone, label: 'Contact Info' },
                { id: 'security', icon: Shield, label: 'Security' },
-             ].map((item) => (
-               <button key={item.id} onClick={() => setActiveTab(item.id as any)} className={`w-full text-left px-6 py-4 flex items-center gap-3 text-xs uppercase tracking-widest transition-all ${activeTab === item.id ? 'bg-gold text-white shadow-lg' : 'bg-white hover:bg-black/5'}`}>
-                 <item.icon size={16} /> {item.label}
+             ].map((tab) => (
+               <button
+                 key={tab.id}
+                 onClick={() => setActiveTab(tab.id as any)}
+                 className={`w-full flex items-center gap-4 px-6 py-4 transition-all text-[11px] uppercase tracking-widest font-cinzel ${activeTab === tab.id ? 'bg-gold text-white shadow-lg' : 'bg-white hover:bg-black/5 text-charcoal'}`}
+               >
+                 <tab.icon size={16} /> {tab.label}
                </button>
              ))}
           </nav>
 
-          {/* Editors */}
-          <div className="lg:col-span-3 bg-white border border-black/5 p-10 min-h-[600px] shadow-sm relative">
+          {/* Main Content */}
+          <main className="lg:col-span-3 space-y-12">
             
-            {activeTab === 'theme' && (
-              <div className="space-y-16">
-                 <div>
-                    <h3 className="font-cinzel text-xl text-obsidian border-b border-black/5 pb-4 mb-8">Layout Templates</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <button 
-                        onClick={() => updateHomeLayout('classic')}
-                        className={`border p-6 text-left transition-all ${content.homeLayout === 'classic' ? 'border-gold bg-gold/5 ring-1 ring-gold' : 'border-black/10 hover:border-gold/50'}`}
-                      >
-                        <LayoutTemplate size={32} className="mb-4 text-obsidian" />
-                        <h4 className="font-cinzel text-lg uppercase mb-2">Classic</h4>
-                        <p className="text-xs text-charcoal/60">Full screen background image with centered typography overlay.</p>
-                      </button>
-
-                      <button 
-                        onClick={() => updateHomeLayout('framed')}
-                        className={`border p-6 text-left transition-all ${content.homeLayout === 'framed' ? 'border-gold bg-gold/5 ring-1 ring-gold' : 'border-black/10 hover:border-gold/50'}`}
-                      >
-                        <Square size={32} className="mb-4 text-obsidian" />
-                        <h4 className="font-cinzel text-lg uppercase mb-2">Framed</h4>
-                        <p className="text-xs text-charcoal/60">Inset background with a gallery frame border. Text overlaps the image.</p>
-                      </button>
-
-                      <button 
-                        onClick={() => updateHomeLayout('editorial')}
-                        className={`border p-6 text-left transition-all ${content.homeLayout === 'editorial' ? 'border-gold bg-gold/5 ring-1 ring-gold' : 'border-black/10 hover:border-gold/50'}`}
-                      >
-                        <Columns size={32} className="mb-4 text-obsidian" />
-                        <h4 className="font-cinzel text-lg uppercase mb-2">Editorial</h4>
-                        <p className="text-xs text-charcoal/60">Split screen layout. Typography on the left, full-height image on the right.</p>
-                      </button>
-                    </div>
-                 </div>
-
-                 <div>
-                    <h3 className="font-cinzel text-xl text-obsidian border-b border-black/5 pb-4 mb-8">Visual Effects</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      {(Object.keys(THEME_EFFECTS) as VisualEffect[]).map((effect) => (
-                        <button key={effect} onClick={() => updateGlobalEffect(effect)} className={`relative group border p-4 text-left transition-all ${content.globalEffect === effect ? 'border-gold bg-gold/5 ring-1 ring-gold' : 'border-black/10 hover:border-gold/50'}`}>
-                            <div className={`aspect-video w-full mb-4 bg-gray-200 overflow-hidden`}>
-                              <img src={content.heroImage} alt="Preview" className={`w-full h-full object-cover ${THEME_EFFECTS[effect]}`} />
-                            </div>
-                            <h4 className="font-cinzel text-sm uppercase text-obsidian">{effect}</h4>
-                        </button>
-                      ))}
-                    </div>
-                 </div>
-              </div>
-            )}
-
+            {/* --- HERO SECTION --- */}
             {activeTab === 'hero' && (
-              <div className="space-y-10">
-                 <h3 className="font-cinzel text-xl text-obsidian border-b border-black/5 pb-4">Home Page / Hero</h3>
-                 <div className="grid md:grid-cols-2 gap-10">
-                   <div className="space-y-4">
-                      <label className="text-xs uppercase tracking-widest text-charcoal/60 block">Background</label>
-                      <div className="relative aspect-video bg-black/5 overflow-hidden border border-black/10 group">
-                        <img src={content.heroImage} className="w-full h-full object-cover" alt="Hero" />
-                        <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
-                          <Upload size={24} className="mb-2"/> <span className="text-[10px]">Change</span>
-                          <input type="file" className="hidden" accept="image/*" onChange={handleHeroUpload} />
-                        </label>
-                      </div>
-                   </div>
-                   <div className="space-y-6">
-                      <input value={content.heroTitle} onChange={(e) => updateHero({ heroTitle: e.target.value })} className="w-full border-b p-2 font-cinzel text-xl" placeholder="Title" />
-                      <input value={content.heroSubtitle} onChange={(e) => updateHero({ heroSubtitle: e.target.value })} className="w-full border-b p-2 font-cinzel text-lg text-gold" placeholder="Subtitle" />
-                   </div>
-                 </div>
-              </div>
-            )}
-
-            {activeTab === 'portfolio' && (
-              <div className="space-y-12">
-                 <h3 className="font-cinzel text-xl text-obsidian border-b border-black/5 pb-4">Manage Galleries</h3>
-                 {[
-                   { id: 'stories', label: 'Wedding Stories' },
-                   { id: 'portraits', label: 'Portraits' },
-                   { id: 'preWeddings', label: 'Pre-Weddings' },
-                   { id: 'photobooks', label: 'Photobooks' },
-                   { id: 'special', label: 'Special Highlights' }
-                 ].map((section) => (
-                   <div key={section.id}>
-                     <div className="flex justify-between items-center mb-6">
-                       <h4 className="text-xs uppercase tracking-widest text-gold">{section.label}</h4>
-                       <label className="cursor-pointer bg-obsidian text-white px-4 py-2 text-[10px] uppercase hover:bg-gold flex items-center gap-2">
-                          <Upload size={12} /> Add
-                          <input type="file" className="hidden" accept="image/*" onChange={(e) => handleGridUpload(e, section.id as any)} />
-                       </label>
-                     </div>
-                     <div className="grid grid-cols-4 md:grid-cols-6 gap-4">
-                        {(content as any)[section.id]?.map((img: string, i: number) => (
-                          <div key={i} className="relative aspect-[3/4] group bg-gray-100">
-                            <img src={img} className="w-full h-full object-cover" alt="" />
-                            <button onClick={() => removeImage(section.id as any, i)} className="absolute top-1 right-1 bg-red-500 text-white p-1 opacity-0 group-hover:opacity-100"><Trash2 size={10} /></button>
-                          </div>
-                        ))}
-                     </div>
-                   </div>
-                 ))}
-              </div>
-            )}
-
-            {activeTab === 'films' && (
-              <div className="space-y-10">
-                 <h3 className="font-cinzel text-xl text-obsidian border-b border-black/5 pb-4">Cinematography</h3>
-                 
-                 {/* Add New Film Section */}
-                 <div className="flex flex-col md:flex-row gap-4 items-end bg-gray-50 p-6 border border-black/5 mb-8">
-                   <div className="flex-grow w-full">
-                     <label className="text-[10px] uppercase text-charcoal/60">New Film Title</label>
-                     <input value={newFilmTitle} onChange={e => setNewFilmTitle(e.target.value)} className="w-full bg-transparent border-b border-black/10 p-2 text-sm focus:border-gold outline-none" placeholder="e.g. The Royal Wedding" />
-                   </div>
-                   <div className="flex-grow w-full">
-                     <label className="text-[10px] uppercase text-charcoal/60">YouTube / Drive URL</label>
-                     <input value={newFilmUrl} onChange={e => setNewFilmUrl(e.target.value)} className="w-full bg-transparent border-b border-black/10 p-2 text-sm focus:border-gold outline-none" placeholder="https://..." />
-                   </div>
-                   <button onClick={addFilm} className="w-full md:w-auto bg-gold text-white px-6 py-2 text-xs uppercase hover:bg-obsidian transition-colors">Add</button>
-                 </div>
-
-                 {/* Edit Existing Films */}
-                 <div className="space-y-6">
-                   {content.films.map((film, i) => (
-                     <div key={i} className="flex flex-col md:flex-row gap-6 p-6 border border-black/5 bg-white shadow-sm hover:shadow-md transition-all">
-                        {/* Thumbnail Preview & Upload */}
-                       <div className="relative w-full md:w-32 aspect-video bg-gray-200 overflow-hidden shrink-0 group">
-                          <img src={film.thumbnail} className="w-full h-full object-cover" alt="Film thumbnail" />
-                          <label className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer text-white">
-                            <Upload size={16} className="mb-1"/>
-                            <span className="text-[8px] uppercase tracking-widest">Change</span>
-                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFilmThumbnailUpload(e, i)} />
-                          </label>
-                       </div>
-                       
-                       {/* Edit Inputs */}
-                       <div className="flex-grow space-y-4">
-                         <div>
-                            <label className="text-[9px] uppercase tracking-widest text-charcoal/40 mb-1 block">Title</label>
-                            <input 
-                              value={film.title} 
-                              onChange={(e) => updateFilmDetails(i, 'title', e.target.value)} 
-                              className="w-full font-cinzel text-lg border-b border-transparent hover:border-black/10 focus:border-gold outline-none bg-transparent transition-colors p-1"
-                            />
-                         </div>
-                         <div>
-                            <label className="text-[9px] uppercase tracking-widest text-charcoal/40 mb-1 block">Video URL</label>
-                            <input 
-                              value={film.url} 
-                              onChange={(e) => updateFilmDetails(i, 'url', e.target.value)} 
-                              className="w-full font-manrope text-xs text-charcoal/70 border-b border-transparent hover:border-black/10 focus:border-gold outline-none bg-transparent transition-colors p-1"
-                            />
-                         </div>
-                       </div>
-
-                       {/* Actions */}
-                       <div className="flex items-start">
-                         <button onClick={() => removeFilm(i)} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-all" title="Remove Film">
-                           <Trash2 size={18} />
-                         </button>
-                       </div>
-                     </div>
-                   ))}
-                 </div>
-              </div>
-            )}
-
-            {activeTab === 'about' && (
-              <div className="space-y-12">
-                 <h3 className="font-cinzel text-xl text-obsidian border-b border-black/5 pb-4">About Section</h3>
-                 
-                 <div className="grid md:grid-cols-2 gap-12">
-                    {/* Text Details */}
-                    <div className="space-y-6 md:col-span-1">
-                      <div>
-                        <label className="text-xs uppercase tracking-widest text-charcoal/60">Title</label>
-                        <input value={content.about.title} onChange={(e) => updateAbout({ title: e.target.value })} className="w-full border-b p-2 font-cinzel text-xl" />
-                      </div>
-                      <div>
-                        <label className="text-xs uppercase tracking-widest text-charcoal/60">Subtitle</label>
-                        <input value={content.about.subtitle} onChange={(e) => updateAbout({ subtitle: e.target.value })} className="w-full border-b p-2 font-cinzel text-sm text-gold" />
-                      </div>
-                      <div>
-                        <label className="text-xs uppercase tracking-widest text-charcoal/60">Description</label>
-                        <textarea value={content.about.description} onChange={(e) => updateAbout({ description: e.target.value })} rows={10} className="w-full border p-2 text-sm leading-relaxed" />
-                      </div>
-                    </div>
-
-                    {/* Image Gallery */}
-                    <div className="space-y-4 md:col-span-1">
-                      <div className="flex justify-between items-center mb-2">
-                        <label className="text-xs uppercase tracking-widest text-charcoal/60">Photos</label>
-                        <label className="cursor-pointer bg-obsidian text-white px-3 py-1 text-[9px] uppercase hover:bg-gold flex items-center gap-2">
-                          <Plus size={10} /> Add
-                          <input type="file" className="hidden" accept="image/*" onChange={handleAboutImageUpload} />
-                        </label>
-                      </div>
-                      <div className="grid grid-cols-3 gap-3 max-h-[400px] overflow-y-auto pr-2">
-                        {(content.about.images || []).map((img, i) => (
-                           <div key={i} className="relative aspect-[3/4] group bg-gray-100">
-                             <img src={img} className="w-full h-full object-cover" alt="" />
-                             <button onClick={() => removeAboutImage(i)} className="absolute top-1 right-1 bg-red-500 text-white p-1 opacity-0 group-hover:opacity-100"><Trash2 size={10} /></button>
-                           </div>
-                        ))}
-                      </div>
-                    </div>
-                 </div>
-
-                 {/* Videos Section */}
-                 <div className="border-t border-black/5 pt-10">
-                    <h4 className="font-cinzel text-lg text-obsidian mb-6">About Page Videos</h4>
-                    
-                    <div className="flex gap-4 items-end bg-gray-50 p-6 border border-black/5 mb-6">
-                       <div className="flex-grow">
-                         <label className="text-[10px] uppercase text-charcoal/60">Video URL (YouTube / Drive)</label>
-                         <input value={newAboutVideo} onChange={e => setNewAboutVideo(e.target.value)} className="w-full bg-transparent border-b border-black/10 p-2 text-sm focus:border-gold outline-none" />
-                       </div>
-                       <button onClick={addAboutVideo} className="bg-gold text-white px-6 py-2 text-xs uppercase hover:bg-obsidian transition-colors">Add</button>
-                    </div>
-
-                    <div className="space-y-4">
-                      {(content.about.videos || []).map((vid, i) => (
-                        <div key={i} className="flex items-center justify-between p-4 border border-black/5 bg-white">
-                          <div className="flex items-center gap-4 overflow-hidden">
-                             <Video size={20} className="text-gold shrink-0" />
-                             <span className="text-xs truncate max-w-md">{vid}</span>
-                          </div>
-                          <button onClick={() => removeAboutVideo(i)} className="text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
+               <div className="space-y-8">
+                  <div className="bg-white p-8 border border-black/5 shadow-sm">
+                     <h3 className="font-cinzel text-lg mb-6">Hero Texts</h3>
+                     <div className="space-y-4">
+                        <div>
+                           <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Main Title</label>
+                           <input type="text" className="w-full p-3 border border-black/10 bg-cream/20 font-cinzel" value={content.heroTitle} onChange={(e) => updateHero({ heroTitle: e.target.value })} />
                         </div>
-                      ))}
-                      {(!content.about.videos || content.about.videos.length === 0) && (
-                        <p className="text-xs text-charcoal/40 italic text-center py-4">No videos added yet.</p>
-                      )}
-                    </div>
-                 </div>
-              </div>
-            )}
+                        <div>
+                           <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Subtitle</label>
+                           <input type="text" className="w-full p-3 border border-black/10 bg-cream/20 font-cinzel" value={content.heroSubtitle} onChange={(e) => updateHero({ heroSubtitle: e.target.value })} />
+                        </div>
+                     </div>
+                  </div>
 
-            {activeTab === 'contact' && (
-              <div className="space-y-10">
-                 <h3 className="font-cinzel text-xl text-obsidian border-b border-black/5 pb-4">Contact Info</h3>
-                 <div className="grid md:grid-cols-2 gap-8">
-                   <div>
-                      <label className="text-xs uppercase tracking-widest text-charcoal/60">Phone</label>
-                      <input value={content.contact.phone} onChange={(e) => updateContact({ phone: e.target.value })} className="w-full border-b p-2" />
-                   </div>
-                   <div>
-                      <label className="text-xs uppercase tracking-widest text-charcoal/60">Email</label>
-                      <input value={content.contact.email} onChange={(e) => updateContact({ email: e.target.value })} className="w-full border-b p-2" />
-                   </div>
-                   <div className="md:col-span-2">
-                      <label className="text-xs uppercase tracking-widest text-charcoal/60">Address</label>
-                      <input value={content.contact.address} onChange={(e) => updateContact({ address: e.target.value })} className="w-full border-b p-2" />
-                   </div>
-                   <div className="md:col-span-2">
-                      <label className="text-xs uppercase tracking-widest text-charcoal/60">Instagram URL</label>
-                      <input value={content.contact.instagram} onChange={(e) => updateContact({ instagram: e.target.value })} className="w-full border-b p-2" />
-                   </div>
-                 </div>
-              </div>
-            )}
-
-            {activeTab === 'security' && (
-              <div className="space-y-10">
-                 <h3 className="font-cinzel text-xl text-obsidian border-b border-black/5 pb-4">Admin Security</h3>
-                 <div className="max-w-md space-y-6">
-                    <div>
-                      <label className="text-xs uppercase tracking-widest text-charcoal/60 block mb-2">New Username</label>
-                      <input 
-                        type="text" 
-                        value={newUsername} 
-                        onChange={(e) => setNewUsername(e.target.value)} 
-                        className="w-full border border-black/10 p-3 text-sm focus:border-gold outline-none"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs uppercase tracking-widest text-charcoal/60 block mb-2">New Password</label>
-                      <input 
-                        type="password" 
-                        value={newPassword} 
-                        onChange={(e) => setNewPassword(e.target.value)} 
-                        className="w-full border border-black/10 p-3 text-sm focus:border-gold outline-none"
-                        placeholder="Min 4 characters"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-xs uppercase tracking-widest text-charcoal/60 block mb-2">Confirm Password</label>
-                      <input 
-                        type="password" 
-                        value={confirmPassword} 
-                        onChange={(e) => setConfirmPassword(e.target.value)} 
-                        className="w-full border border-black/10 p-3 text-sm focus:border-gold outline-none"
-                      />
-                    </div>
-                    
-                    {credMessage && (
-                      <div className={`text-xs p-3 ${credMessage.includes('success') ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                        {credMessage}
-                      </div>
-                    )}
-
-                    <button 
-                      onClick={handleChangeCredentials} 
-                      className="bg-obsidian text-white px-8 py-3 text-xs uppercase tracking-widest hover:bg-gold transition-colors flex items-center gap-2"
-                    >
-                      <Save size={14} /> Update Credentials
-                    </button>
-                 </div>
-              </div>
-            )}
-
-            {isUploading && (
-               <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-50">
-                 <div className="w-8 h-8 border-2 border-gold border-t-transparent rounded-full animate-spin mb-4"></div>
-                 <span className="font-cinzel text-xs tracking-widest">Processing...</span>
+                  <div className="bg-white p-8 border border-black/5 shadow-sm">
+                     <h3 className="font-cinzel text-lg mb-6">Main Background</h3>
+                     <div className="aspect-video bg-black/10 mb-6 relative group overflow-hidden">
+                        <img src={content.heroImage} alt="Hero" className={`w-full h-full object-cover ${THEME_EFFECTS[content.globalEffect]}`} />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                           <span className="text-white text-xs uppercase tracking-widest border border-white px-4 py-2">Preview</span>
+                        </div>
+                     </div>
+                     <label className="bg-obsidian text-white px-6 py-3 text-xs uppercase tracking-widest cursor-pointer hover:bg-gold transition-colors inline-block">
+                        Upload New Image
+                        <input type="file" className="hidden" onChange={handleHeroUpload} accept="image/*" />
+                     </label>
+                  </div>
                </div>
             )}
 
-          </div>
+            {/* --- THEME SECTION --- */}
+            {activeTab === 'theme' && (
+              <div className="space-y-8">
+                {/* Visual Effect Selector */}
+                <div className="bg-white p-8 border border-black/5 shadow-sm">
+                  <h3 className="font-cinzel text-lg mb-2">Visual Grading</h3>
+                  <p className="text-charcoal/50 text-xs mb-6">Applies a global color grade to all images.</p>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                    {(['natural', 'noir', 'vintage', 'vivid', 'matte'] as VisualEffect[]).map((effect) => (
+                      <button 
+                        key={effect}
+                        onClick={() => updateGlobalEffect(effect)}
+                        className={`p-4 border ${content.globalEffect === effect ? 'border-gold bg-gold/10' : 'border-black/5 hover:border-gold/50'} text-center transition-all`}
+                      >
+                         <div className={`w-full h-16 bg-cover bg-center mb-3 ${THEME_EFFECTS[effect]}`} style={{ backgroundImage: `url(${content.heroImage})` }}></div>
+                         <span className="text-[10px] uppercase tracking-widest block">{effect}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Layout Selector */}
+                <div className="bg-white p-8 border border-black/5 shadow-sm">
+                   <h3 className="font-cinzel text-lg mb-2">Home Layout</h3>
+                   <p className="text-charcoal/50 text-xs mb-6">Choose the structural design of the landing page.</p>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <button onClick={() => updateHomeLayout('classic')} className={`p-6 border text-left transition-all ${content.homeLayout === 'classic' ? 'border-gold bg-gold/10' : 'border-black/5'}`}>
+                         <LayoutTemplate className="mb-4 text-obsidian" size={24} />
+                         <span className="font-cinzel text-sm block mb-1">Classic</span>
+                         <span className="text-[10px] text-charcoal/60 leading-relaxed block">Full screen cinematic background with centered typography.</span>
+                      </button>
+                      <button onClick={() => updateHomeLayout('framed')} className={`p-6 border text-left transition-all ${content.homeLayout === 'framed' ? 'border-gold bg-gold/10' : 'border-black/5'}`}>
+                         <Square className="mb-4 text-obsidian" size={24} />
+                         <span className="font-cinzel text-sm block mb-1">Framed</span>
+                         <span className="text-[10px] text-charcoal/60 leading-relaxed block">Boxed image with white borders and high-contrast text overlay.</span>
+                      </button>
+                      <button onClick={() => updateHomeLayout('editorial')} className={`p-6 border text-left transition-all ${content.homeLayout === 'editorial' ? 'border-gold bg-gold/10' : 'border-black/5'}`}>
+                         <Columns className="mb-4 text-obsidian" size={24} />
+                         <span className="font-cinzel text-sm block mb-1">Editorial</span>
+                         <span className="text-[10px] text-charcoal/60 leading-relaxed block">Split screen layout. Text on one side, image on the other.</span>
+                      </button>
+                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* --- PORTFOLIO SECTION --- */}
+            {activeTab === 'portfolio' && (
+               <div className="space-y-12">
+                  {[
+                    { key: 'portraits', label: 'Portraits' }, 
+                    { key: 'stories', label: 'Wedding Stories' },
+                    { key: 'preWeddings', label: 'Pre-Weddings' },
+                    { key: 'photobooks', label: 'Photobooks' },
+                    { key: 'special', label: 'Special Highlights' }
+                  ].map((section) => (
+                    <div key={section.key} className="bg-white p-8 border border-black/5 shadow-sm">
+                        <div className="flex justify-between items-center mb-6">
+                           <h3 className="font-cinzel text-lg">{section.label}</h3>
+                           <label className="bg-black/5 hover:bg-gold hover:text-white px-4 py-2 text-[10px] uppercase tracking-widest transition-colors cursor-pointer flex items-center gap-2">
+                             <Plus size={14} /> Add Images
+                             <input 
+                               type="file" 
+                               multiple 
+                               className="hidden" 
+                               onChange={(e) => handleGridUpload(e, section.key as any)} 
+                               accept="image/*"
+                             />
+                           </label>
+                        </div>
+                        
+                        <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
+                           {content[section.key as 'portraits' | 'stories' | 'preWeddings' | 'photobooks' | 'special']?.map((url, i) => (
+                              <div key={i} className="relative group aspect-square bg-gray-100">
+                                 <img src={url} className="w-full h-full object-cover" loading="lazy" />
+                                 <button 
+                                   onClick={() => removeImage(section.key as any, i)}
+                                   className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                 >
+                                    <Trash2 size={12} />
+                                 </button>
+                              </div>
+                           ))}
+                        </div>
+                    </div>
+                  ))}
+               </div>
+            )}
+
+            {/* --- FILMS SECTION --- */}
+            {activeTab === 'films' && (
+              <div className="space-y-12">
+                {/* Add New Film Section */}
+                <div className="bg-white p-8 shadow-sm border border-black/5">
+                   <h3 className="font-cinzel text-lg mb-6">Add New Cinematography</h3>
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                      <input 
+                        type="text" 
+                        placeholder="Film Title" 
+                        className="p-3 border border-black/10 bg-cream/20 text-sm focus:border-gold outline-none"
+                        value={newFilmTitle}
+                        onChange={(e) => setNewFilmTitle(e.target.value)}
+                      />
+                      <input 
+                        type="text" 
+                        placeholder="YouTube/Drive URL" 
+                        className="p-3 border border-black/10 bg-cream/20 text-sm focus:border-gold outline-none"
+                        value={newFilmUrl}
+                        onChange={(e) => setNewFilmUrl(e.target.value)}
+                      />
+                   </div>
+                   
+                   <div className="mb-6">
+                      <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Thumbnail Image</label>
+                      <div className="flex items-center gap-4">
+                         {newFilmThumbnail && <img src={newFilmThumbnail} className="w-20 h-12 object-cover border border-black/10" />}
+                         <label className="cursor-pointer bg-black/5 hover:bg-gold hover:text-white px-4 py-2 text-xs uppercase tracking-widest transition-colors flex items-center gap-2">
+                           <Upload size={14} /> Upload Cover
+                           <input type="file" className="hidden" onChange={handleNewFilmThumbnailUpload} accept="image/*" />
+                         </label>
+                      </div>
+                   </div>
+
+                   <button onClick={addFilm} className="bg-obsidian text-white px-8 py-3 text-xs uppercase tracking-widest hover:bg-gold transition-colors">
+                     Add Film to Gallery
+                   </button>
+                </div>
+
+                {/* Existing Films List */}
+                <div className="space-y-4">
+                  {content.films.map((film, i) => (
+                    <div key={i} className="bg-white p-4 border border-black/5 flex flex-col md:flex-row gap-6 items-start md:items-center shadow-sm">
+                       {/* Thumbnail Section with Edit Option */}
+                       <div className="relative group shrink-0 w-40 aspect-video bg-black/10 overflow-hidden">
+                          <img src={film.thumbnail} alt={film.title} className="w-full h-full object-cover transition-opacity duration-300 group-hover:opacity-60" />
+                          <label className="absolute inset-0 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity bg-black/40 text-white gap-1">
+                             <Upload size={18} />
+                             <span className="text-[9px] uppercase tracking-widest font-bold">Change</span>
+                             <input 
+                               type="file" 
+                               className="hidden" 
+                               accept="image/*" 
+                               onChange={(e) => handleFilmThumbnailUpload(e, i)} 
+                             />
+                          </label>
+                       </div>
+                       
+                       <div className="flex-grow w-full space-y-2">
+                          <input 
+                             type="text" 
+                             value={film.title} 
+                             onChange={(e) => updateFilmDetails(i, 'title', e.target.value)}
+                             className="w-full p-2 border-b border-black/5 focus:border-gold outline-none font-cinzel text-sm bg-transparent"
+                             placeholder="Film Title"
+                          />
+                          <input 
+                             type="text" 
+                             value={film.url} 
+                             onChange={(e) => updateFilmDetails(i, 'url', e.target.value)}
+                             className="w-full p-2 border-b border-black/5 focus:border-gold outline-none text-xs text-charcoal/60 font-mono bg-transparent"
+                             placeholder="Film URL"
+                          />
+                       </div>
+
+                       <button onClick={() => removeFilm(i)} className="text-red-400 hover:text-red-600 p-2 hover:bg-red-50 rounded-full transition-colors">
+                         <Trash2 size={18} />
+                       </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* --- ABOUT SECTION --- */}
+            {activeTab === 'about' && (
+               <div className="space-y-8">
+                  <div className="bg-white p-8 border border-black/5 shadow-sm">
+                     <h3 className="font-cinzel text-lg mb-6">About Page Texts</h3>
+                     <div className="space-y-4">
+                        <input 
+                          type="text" 
+                          className="w-full p-3 border border-black/10 bg-cream/20 font-cinzel text-sm" 
+                          value={content.about.title} 
+                          onChange={(e) => updateAbout({ title: e.target.value })} 
+                          placeholder="Main Title"
+                        />
+                        <input 
+                          type="text" 
+                          className="w-full p-3 border border-black/10 bg-cream/20 font-cinzel text-sm" 
+                          value={content.about.subtitle} 
+                          onChange={(e) => updateAbout({ subtitle: e.target.value })} 
+                          placeholder="Subtitle"
+                        />
+                        <textarea 
+                          rows={10}
+                          className="w-full p-3 border border-black/10 bg-cream/20 text-sm leading-relaxed"
+                          value={content.about.description} 
+                          onChange={(e) => updateAbout({ description: e.target.value })} 
+                          placeholder="Description (Supports line breaks)"
+                        />
+                        <p className="text-[10px] text-charcoal/40">Tip: Use ALL CAPS for subheadings. Use "✔️" or "✨" for bullet points.</p>
+                     </div>
+                  </div>
+
+                  <div className="bg-white p-8 border border-black/5 shadow-sm">
+                     <h3 className="font-cinzel text-lg mb-6">Founder Images</h3>
+                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                        {content.about.images.map((img, i) => (
+                           <div key={i} className="relative group aspect-[4/5] bg-gray-100">
+                              <img src={img} className="w-full h-full object-cover" />
+                              <button onClick={() => removeAboutImage(i)} className="absolute top-1 right-1 bg-red-500 text-white p-1 rounded-full opacity-0 group-hover:opacity-100"><Trash2 size={12} /></button>
+                           </div>
+                        ))}
+                     </div>
+                     <label className="bg-black/5 hover:bg-gold hover:text-white px-6 py-3 text-xs uppercase tracking-widest cursor-pointer inline-block transition-colors">
+                        Upload Image
+                        <input type="file" className="hidden" onChange={handleAboutImageUpload} accept="image/*" />
+                     </label>
+                  </div>
+
+                  <div className="bg-white p-8 border border-black/5 shadow-sm">
+                     <h3 className="font-cinzel text-lg mb-6">Behind The Scenes Videos</h3>
+                     <div className="flex gap-4 mb-6">
+                        <input 
+                           type="text" 
+                           className="flex-grow p-3 border border-black/10 bg-cream/20 text-sm" 
+                           placeholder="Video URL"
+                           value={newAboutVideo}
+                           onChange={(e) => setNewAboutVideo(e.target.value)}
+                        />
+                        <button onClick={addAboutVideo} className="bg-obsidian text-white px-6 text-xs uppercase tracking-widest hover:bg-gold">Add</button>
+                     </div>
+                     <div className="space-y-2">
+                        {content.about.videos?.map((vid, i) => (
+                           <div key={i} className="flex justify-between items-center bg-cream/30 p-3 border border-black/5">
+                              <span className="text-xs truncate max-w-xs">{vid}</span>
+                              <button onClick={() => removeAboutVideo(i)} className="text-red-400 hover:text-red-600"><Trash2 size={14} /></button>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+            )}
+
+            {/* --- CONTACT SECTION --- */}
+            {activeTab === 'contact' && (
+               <div className="bg-white p-8 border border-black/5 shadow-sm space-y-6">
+                   <h3 className="font-cinzel text-lg mb-6">Contact Information</h3>
+                   
+                   <div>
+                      <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Phone Number</label>
+                      <input type="text" className="w-full p-3 border border-black/10 bg-cream/20 text-sm" value={content.contact.phone} onChange={(e) => updateContact({ phone: e.target.value })} />
+                   </div>
+                   <div>
+                      <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Email Address</label>
+                      <input type="text" className="w-full p-3 border border-black/10 bg-cream/20 text-sm" value={content.contact.email} onChange={(e) => updateContact({ email: e.target.value })} />
+                   </div>
+                   <div>
+                      <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Physical Address</label>
+                      <textarea rows={3} className="w-full p-3 border border-black/10 bg-cream/20 text-sm" value={content.contact.address} onChange={(e) => updateContact({ address: e.target.value })} />
+                   </div>
+                   <div>
+                      <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Instagram Link</label>
+                      <input type="text" className="w-full p-3 border border-black/10 bg-cream/20 text-sm" value={content.contact.instagram} onChange={(e) => updateContact({ instagram: e.target.value })} />
+                   </div>
+               </div>
+            )}
+
+            {/* --- SECURITY SECTION --- */}
+            {activeTab === 'security' && (
+               <div className="bg-white p-8 border border-black/5 shadow-sm max-w-lg">
+                  <h3 className="font-cinzel text-lg mb-6 flex items-center gap-3"><Shield size={20} className="text-gold"/> Admin Credentials</h3>
+                  <form onSubmit={handleChangeCredentials} className="space-y-4">
+                     <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Username</label>
+                        <input type="text" className="w-full p-3 border border-black/10 bg-cream/20 text-sm" value={newUsername} onChange={(e) => setNewUsername(e.target.value)} />
+                     </div>
+                     <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">New Password</label>
+                        <input type="password" className="w-full p-3 border border-black/10 bg-cream/20 text-sm" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} />
+                     </div>
+                     <div>
+                        <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Confirm Password</label>
+                        <input type="password" className="w-full p-3 border border-black/10 bg-cream/20 text-sm" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} />
+                     </div>
+                     
+                     {credMessage && <p className={`text-xs text-center ${credMessage.includes('success') ? 'text-green-600' : 'text-red-500'}`}>{credMessage}</p>}
+                     
+                     <button type="submit" className="w-full bg-obsidian text-white py-3 font-cinzel text-xs uppercase tracking-widest hover:bg-gold transition-colors">Update Credentials</button>
+                  </form>
+               </div>
+            )}
+
+          </main>
         </div>
       </div>
     </div>

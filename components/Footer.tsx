@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Youtube, Facebook, Mail, Phone, MapPin } from 'lucide-react';
+import { Instagram, Youtube, Facebook, Mail, Phone, MapPin, Lock } from 'lucide-react';
 import { BRAND } from '../constants.tsx';
 import { useContent } from '../context/ContentContext.tsx';
 

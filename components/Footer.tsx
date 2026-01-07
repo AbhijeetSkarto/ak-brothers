@@ -1,8 +1,7 @@
 
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Instagram, Youtube, Facebook, Mail, Phone, MapPin, Lock } from 'lucide-react';
-import { BRAND } from '../constants.tsx';
+import { Instagram, Youtube, Facebook, Mail, Phone, MapPin } from 'lucide-react';
 import { useContent } from '../context/ContentContext.tsx';
 
 const Footer: React.FC = () => {
@@ -15,7 +14,7 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-16 lg:gap-24">
           <div className="col-span-1 md:col-span-2">
             <Link to="/">
-              <img src={BRAND.logo} alt="AK BROTHERS" className="h-20 mb-10 opacity-90 hover:opacity-100 transition-opacity invert" />
+              <img src={content.logo} alt="AK BROTHERS" className="h-20 mb-10 opacity-90 hover:opacity-100 transition-opacity invert" />
             </Link>
             <p className="text-charcoal/80 max-w-md font-light leading-loose text-sm tracking-wide">
               Crafting cinematic legacies for the world's most distinguished couples. AK BROTHERS specializes in high-contrast, emotional storytelling that transcends time.
@@ -28,17 +27,18 @@ const Footer: React.FC = () => {
           </div>
           
           <div>
-            <h4 className="font-cinzel text-gold text-xs tracking-[0.4em] uppercase mb-10">Portfolio</h4>
+            <h4 className="font-cinzel text-gold text-xs tracking-[0.4em] uppercase mb-10">Studio</h4>
             <ul className="space-y-5 text-[11px] tracking-[0.2em] uppercase text-charcoal/80">
-              <li><Link to="/images" className="hover:text-gold transition-colors">Portraits</Link></li>
+              <li><Link to="/about" className="hover:text-gold transition-colors">Our Story</Link></li>
               <li><Link to="/stories" className="hover:text-gold transition-colors">Wedding Stories</Link></li>
+              <li><Link to="/images" className="hover:text-gold transition-colors">Portraits</Link></li>
               <li><Link to="/films" className="hover:text-gold transition-colors">Films</Link></li>
               <li><Link to="/pre-weddings" className="hover:text-gold transition-colors">Pre-Weddings</Link></li>
             </ul>
           </div>
 
           <div>
-            <h4 className="font-cinzel text-gold text-xs tracking-[0.4em] uppercase mb-10">Bhopal Studio</h4>
+            <h4 className="font-cinzel text-gold text-xs tracking-[0.4em] uppercase mb-10">Bhopal HQ</h4>
             <div className="space-y-6 text-sm text-charcoal/80 font-light leading-loose">
               <p className="flex items-start gap-3">
                 <MapPin size={20} className="text-gold flex-shrink-0 mt-1" /> 
@@ -59,6 +59,7 @@ const Footer: React.FC = () => {
           <div className="flex gap-8 items-center">
             <Link to="/faq" className="hover:text-gold transition-colors">FAQ</Link>
             <Link to="/contact" className="hover:text-gold transition-colors">Booking</Link>
+            <Link to="/admin" className="opacity-0 hover:opacity-100 transition-opacity">Staff</Link>
           </div>
         </div>
       </div>

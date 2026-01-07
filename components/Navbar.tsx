@@ -1,108 +1,101 @@
 
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X } from 'lucide-react';
-import { BRAND, NAV_SECTIONS } from '../constants.tsx';
+import { Menu, X, Instagram } from 'lucide-react';
+import { gsap } from 'gsap';
+import { useContent } from '../context/ContentContext.tsx';
+import { BRAND } from '../constants.tsx';
 
 const Navbar: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isScrolled, setIsScrolled] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const { content } = useContent();
   const location = useLocation();
 
   useEffect(() => {
-    const handleScroll = () => setIsScrolled(window.scrollY > 20);
+    const handleScroll = () => setScrolled(window.scrollY > 50);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  useEffect(() => setIsOpen(false), [location.pathname]);
+  useEffect(() => {
+    setIsOpen(false);
+  }, [location.pathname]);
 
-  // Main navigation links shown in the center on desktop
-  const desktopLinks = NAV_SECTIONS.filter(link => 
-    ['/stories', '/images', '/films', '/photobooks', '/pre-weddings'].includes(link.path)
-  );
-
-  const isHome = location.pathname === '/';
-  // If we are on home and not scrolled, background is transparent -> Text White
-  // Otherwise background is cream -> Text Obsidian
-  const isTransparent = isHome && !isScrolled;
-
-  const textColor = isTransparent ? 'text-white' : 'text-obsidian';
-  const borderColor = isTransparent ? 'border-white/30' : 'border-black/10';
-  const logoFilter = isTransparent ? 'invert' : ''; // Logo is dark by default, invert makes it white
-  const hoverColor = 'hover:text-gold';
+  const navLinks = [
+    { name: 'Home', path: '/' },
+    { name: 'Stories', path: '/stories' },
+    { name: 'Portraits', path: '/images' },
+    { name: 'Films', path: '/films' },
+    { name: 'Photobooks', path: '/photobooks' },
+    { name: 'Pre-Weddings', path: '/pre-weddings' },
+    { name: 'About Us', path: '/about' },
+  ];
 
   return (
-    <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-700 ${isScrolled ? 'bg-cream/90 backdrop-blur-xl py-4 border-b border-black/5 shadow-sm' : 'bg-transparent py-6 md:py-8'}`}>
-      <div className="container mx-auto px-6 lg:px-12 h-full flex items-center justify-between relative">
-        
-        {/* LEFT: Logo & Phone */}
-        <div className="z-20 flex flex-col items-start">
-          <Link to="/" className="block group">
+    <>
+      <nav className={`fixed top-0 left-0 w-full z-[100] transition-all duration-700 ${scrolled ? 'bg-cream/90 backdrop-blur-md py-4 shadow-sm' : 'bg-transparent py-8'}`}>
+        <div className="container mx-auto px-6 flex justify-between items-center">
+          <Link to="/" className="relative z-[110]">
             <img 
-              src={BRAND.logo} 
+              src={content.logo} 
               alt="AK BROTHERS" 
-              className={`transition-all duration-500 h-10 md:h-12 object-contain ${logoFilter} opacity-90 group-hover:opacity-100`}
+              className={`h-12 md:h-16 transition-all duration-500 invert ${scrolled ? 'scale-90' : 'scale-100'}`} 
             />
           </Link>
-          <span className={`hidden md:block text-[8px] tracking-[0.2em] font-cinzel mt-2 ${isTransparent ? 'text-white/70' : 'text-charcoal/60'}`}>
-            CALL: +91 {BRAND.phone}
-          </span>
-        </div>
 
-        {/* CENTER: Desktop Navigation */}
-        <div className={`hidden lg:flex items-center gap-8 xl:gap-12 absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10`}>
-           {desktopLinks.map(link => (
-             <Link 
-               key={link.path} 
-               to={link.path}
-               className={`text-[10px] xl:text-xs font-cinzel uppercase tracking-[0.25em] transition-colors duration-300 ${textColor} ${hoverColor}`}
-             >
-               {link.name}
-             </Link>
-           ))}
-        </div>
+          {/* Desktop Nav */}
+          <div className="hidden lg:flex items-center gap-10">
+            {navLinks.map((link) => (
+              <Link 
+                key={link.path} 
+                to={link.path}
+                className={`font-cinzel text-[10px] tracking-[0.3em] uppercase transition-all hover:text-gold ${location.pathname === link.path ? 'text-gold' : 'text-obsidian'}`}
+              >
+                {link.name}
+              </Link>
+            ))}
+            <Link to="/contact" className="bg-gold text-white px-8 py-3 font-cinzel text-[10px] tracking-[0.3em] uppercase hover:bg-obsidian transition-all shadow-lg">
+              Contact
+            </Link>
+          </div>
 
-        {/* RIGHT: Office Button & Mobile Toggle */}
-        <div className="flex items-center gap-6 z-20">
-           {/* Desktop Contact Button */}
-           <Link 
-             to="/office" 
-             className={`hidden lg:block border px-6 py-2 text-[10px] font-cinzel uppercase tracking-[0.25em] transition-all duration-300 ${textColor} ${borderColor} hover:bg-gold hover:border-gold hover:text-white`}
-           >
-             Contact
-           </Link>
-
-           {/* Mobile Hamburger */}
-           <button onClick={() => setIsOpen(!isOpen)} className={`lg:hidden ${textColor} hover:scale-110 transition-transform`}>
-             {isOpen ? <X size={28} className="text-obsidian" /> : <Menu size={28} />}
-           </button>
-        </div>
-      </div>
-
-      {/* FULL SCREEN MENU OVERLAY (Mobile) */}
-      <div className={`fixed inset-0 bg-cream z-[110] flex flex-col items-center justify-center space-y-10 transition-transform duration-700 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-        <button onClick={() => setIsOpen(false)} className="absolute top-10 right-10 text-gold p-2 hover:rotate-90 transition-transform">
-          <X size={32} />
-        </button>
-        <Link to="/" className="font-cinzel text-2xl tracking-[0.4em] uppercase text-obsidian hover:text-gold">Home</Link>
-        {desktopLinks.map((link) => (
-          <Link
-            key={link.path}
-            to={link.path}
-            className="font-cinzel text-xl tracking-[0.3em] uppercase text-obsidian hover:text-gold"
+          {/* Mobile Toggle */}
+          <button 
+            className="lg:hidden relative z-[110] text-gold p-2"
+            onClick={() => setIsOpen(!isOpen)}
           >
-            {link.name}
+            {isOpen ? <X size={32} /> : <Menu size={32} />}
+          </button>
+        </div>
+      </nav>
+
+      {/* Mobile Menu Overlay */}
+      <div className={`fixed inset-0 z-[105] bg-cream transition-all duration-700 ease-expo ${isOpen ? 'translate-y-0 opacity-100' : '-translate-y-full opacity-0 pointer-events-none'}`}>
+        <div className="flex flex-col items-center justify-center h-full space-y-8 px-6 text-center">
+          {navLinks.map((link, i) => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`font-cinzel text-2xl md:text-4xl tracking-[0.4em] uppercase transition-all duration-500 hover:text-gold ${location.pathname === link.path ? 'text-gold' : 'text-obsidian'}`}
+              style={{ transitionDelay: `${i * 50}ms` }}
+            >
+              {link.name}
+            </Link>
+          ))}
+          <Link 
+            to="/contact" 
+            className="mt-8 border border-gold text-gold px-12 py-5 font-cinzel text-xs tracking-[0.4em] uppercase hover:bg-gold hover:text-white transition-all w-full max-w-xs"
+          >
+            Contact
           </Link>
-        ))}
-        <Link 
-          to="/office" 
-          className="border border-gold px-12 py-4 text-sm tracking-[0.4em] uppercase text-gold hover:bg-gold hover:text-white transition-all"
-        >
-          Contact
-        </Link>
+          
+          <div className="pt-12 flex gap-8">
+            <a href={content.contact.instagram} target="_blank" className="text-obsidian hover:text-gold transition-colors"><Instagram size={24} /></a>
+          </div>
+        </div>
       </div>
-    </nav>
+    </>
   );
 };
 

@@ -1,157 +1,165 @@
 
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect, useRef } from 'react';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Camera, Heart, Film, Play, Award } from 'lucide-react';
 import { useContent } from '../context/ContentContext.tsx';
 import VideoModal from '../components/VideoModal.tsx';
+import { THEME_EFFECTS } from '../constants.tsx';
+
+gsap.registerPlugin(ScrollTrigger);
 
 const About: React.FC = () => {
   const { content } = useContent();
   const { about } = content;
+  const containerRef = useRef<HTMLDivElement>(null);
   const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
 
-  // Smart Content Parser
-  const renderFormattedText = (text: string) => {
-    return text.split('\n').map((line, index) => {
-      const trimmed = line.trim();
+  useLayoutEffect(() => {
+    const ctx = gsap.context(() => {
+      // Hero Animations
+      gsap.from('.hero-text', { y: 50, opacity: 0, duration: 1, stagger: 0.2, ease: 'power3.out' });
       
-      // Detect Headers (All Uppercase and specific keywords)
-      if (trimmed.match(/^(OUR PHILOSOPHY|WHAT MAKES US DIFFERENT|MEET THE FOUNDER|OUR PROMISE|LET’S CREATE SOMETHING BEAUTIFUL|AK BROTHERS PHOTOGRAPHY)$/) || (trimmed === trimmed.toUpperCase() && trimmed.length > 10 && !trimmed.startsWith('✔️') && !trimmed.startsWith('✨'))) {
-        return (
-          <h3 key={index} className="font-cinzel text-gold text-lg md:text-2xl tracking-[0.2em] uppercase mt-8 md:mt-12 mb-6 md:mb-8 pb-4 border-b border-gold/20 inline-block">
-            {line}
-          </h3>
-        );
-      }
+      // Section Reveals
+      gsap.utils.toArray('.reveal-block').forEach((el: any) => {
+        gsap.from(el, {
+           y: 40, opacity: 0, duration: 1.2, ease: 'power2.out',
+           scrollTrigger: { trigger: el, start: 'top 85%' }
+        });
+      });
+    }, containerRef);
+    return () => ctx.revert();
+  }, []);
 
-      // Detect List Items
-      if (trimmed.startsWith('✔️') || trimmed.startsWith('✨') || trimmed.startsWith('-')) {
-        return (
-          <div key={index} className="flex gap-4 md:gap-6 mb-4 items-start pl-2 md:pl-4 group">
-            <span className="text-gold shrink-0 mt-1 transform group-hover:scale-125 transition-transform duration-300">{trimmed.substring(0, 2).replace(/[a-zA-Z]/g, '') || '•'}</span>
-            <p className="text-charcoal/80 font-light text-base md:text-lg leading-relaxed">
-               {trimmed.replace(/^[✔️✨-]\s*/, '')}
-            </p>
-          </div>
-        );
-      }
-
-      // Empty Lines
-      if (trimmed === '') return <br key={index} className="block content-[''] h-4" />;
-
-      // Standard Paragraph
-      return (
-        <p key={index} className="text-charcoal font-light text-base md:text-xl leading-loose mb-4 tracking-wide text-justify">
-          {line}
-        </p>
-      );
-    });
+  const renderText = (text: string) => {
+      if (!text) return null;
+      return text.split('\n\n').map((paragraph, idx) => (
+          <p key={idx} className="text-charcoal/80 font-light text-base md:text-lg leading-loose mb-6 text-justify">
+              {paragraph}
+          </p>
+      ));
   };
 
   const images = about.images || [];
 
   return (
-    <div className="pt-24 md:pt-32 min-h-screen bg-cream">
-      {/* Hero Header */}
-      <section className="px-6 md:px-20 mb-12 md:mb-20 text-center relative z-10">
-        <span className="text-gold font-cinzel text-[10px] tracking-[1em] uppercase mb-4 md:mb-6 block opacity-80">{about.subtitle}</span>
-        <h2 className="font-cinzel text-4xl md:text-8xl text-obsidian tracking-tighter leading-none mb-8 md:mb-10">{about.title}</h2>
-        <div className="w-24 md:w-32 h-[1px] bg-gradient-to-r from-transparent via-gold to-transparent mx-auto mb-8 md:mb-10" />
-      </section>
+    <div ref={containerRef} className="pt-32 md:pt-48 pb-24 bg-cream min-h-screen">
+       
+       {/* 1. HERO HEADER */}
+       <section className="container mx-auto px-6 md:px-20 mb-20 md:mb-32 text-center">
+          <span className="hero-text text-gold font-cinzel text-[10px] md:text-xs tracking-[1em] uppercase block mb-6 opacity-80">{about.subtitle}</span>
+          <h1 className="hero-text font-cinzel text-5xl md:text-8xl text-obsidian tracking-tighter leading-none mb-8 uppercase">{about.title}</h1>
+          <div className="hero-text w-24 h-[1px] bg-gold mx-auto opacity-50"></div>
+       </section>
 
-      <section className="container mx-auto px-6 md:px-20 mb-20 md:mb-32">
-        <div className="flex flex-col lg:flex-row gap-12 md:gap-20 items-start">
-          
-          {/* LEFT: Artistic Collage (Sticky) */}
-          <div className="lg:w-5/12 lg:sticky lg:top-32 w-full order-1 lg:order-1">
-            <div className="grid grid-cols-2 gap-3 md:gap-4">
-               {/* Main Portrait */}
-               <div className="col-span-2 relative group overflow-hidden bg-gray-200 aspect-[4/5] shadow-2xl border border-white/50">
-                  <div className="absolute top-4 left-4 right-4 bottom-4 border border-white/20 z-10 transition-transform duration-700 group-hover:scale-95 pointer-events-none" />
-                  <img 
-                    src={images[0]} 
-                    alt="Founder Main" 
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                  />
-                  <div className="absolute bottom-6 left-6 z-20 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
-                     <span className="bg-black/40 backdrop-blur-md text-white px-4 py-2 font-cinzel text-[10px] tracking-widest uppercase border border-white/20">The Visionary</span>
-                  </div>
-               </div>
-
-               {/* Secondary Image 1 */}
-               <div className="relative group overflow-hidden bg-gray-200 aspect-square mt-4 md:mt-8 shadow-xl">
-                  <img 
-                    src={images[1]} 
-                    alt="Detail 1" 
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0"
-                  />
-                  <div className="absolute inset-0 bg-gold/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 mix-blend-overlay"></div>
-               </div>
-
-               {/* Secondary Image 2 */}
-               <div className="relative group overflow-hidden bg-gray-200 aspect-square mt-4 md:mt-0 shadow-xl">
-                  <img 
-                    src={images[2]} 
-                    alt="Detail 2" 
-                    className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110 grayscale group-hover:grayscale-0"
-                  />
-                  <div className="absolute inset-0 bg-obsidian/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-               </div>
-
-               {/* Wide Image */}
-               {images[3] && (
-                  <div className="col-span-2 relative group overflow-hidden bg-gray-200 aspect-[16/9] mt-2 md:mt-4 shadow-xl border-t-4 border-gold/10">
-                    <img 
-                        src={images[3]} 
-                        alt="Lifestyle" 
-                        className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105"
-                    />
-                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-black/20">
-                        <Camera className="text-white/80 w-12 h-12" strokeWidth={1} />
-                     </div>
-                  </div>
-               )}
-            </div>
-
-            {/* Stats Row */}
-            <div className="grid grid-cols-3 gap-2 mt-8 md:mt-12 pt-8 border-t border-black/5">
-              <div className="text-center group cursor-default">
-                <Camera size={24} className="text-gold mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                <p className="text-charcoal/50 text-[9px] uppercase tracking-widest">Vision</p>
-              </div>
-              <div className="text-center group cursor-default">
-                <Award size={24} className="text-gold mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                <p className="text-charcoal/50 text-[9px] uppercase tracking-widest">Excellence</p>
-              </div>
-              <div className="text-center group cursor-default">
-                <Heart size={24} className="text-gold mx-auto mb-3 group-hover:scale-110 transition-transform" />
-                <p className="text-charcoal/50 text-[9px] uppercase tracking-widest">Passion</p>
-              </div>
-            </div>
-          </div>
-          
-          {/* RIGHT: Content */}
-          <div className="lg:w-7/12 space-y-2 pb-10 md:pb-20 relative order-2 lg:order-2">
-             <div className="absolute -left-10 top-0 bottom-0 w-[1px] bg-black/5 hidden lg:block" />
-             {renderFormattedText(about.description)}
+       {/* 2. EDITORIAL LAYOUT */}
+       <section className="container mx-auto px-6 md:px-20 mb-20 md:mb-32">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 md:gap-24 items-start">
              
-             <div className="pt-10 md:pt-16 mt-10 md:mt-16 border-t border-black/5">
-                <p className="font-cinzel text-xl md:text-3xl text-obsidian italic">"Every frame is a promise kept forever."</p>
-                <p className="text-gold mt-4 text-sm tracking-widest uppercase">— Akash, Founder</p>
+             {/* LEFT COLUMN: Sticky Image Collage */}
+             <div className="lg:col-span-5 lg:sticky lg:top-32 space-y-4 reveal-block">
+                {/* Main Brand Image */}
+                <div className="aspect-[3/4] bg-gray-200 overflow-hidden relative shadow-2xl group border border-white/40">
+                   <div className="absolute inset-0 bg-black/5 group-hover:bg-transparent transition-colors z-10" />
+                   <img 
+                     src={images[0]} 
+                     alt="Brand Philosophy" 
+                     className={`w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105 ${THEME_EFFECTS[content.globalEffect]}`} 
+                   />
+                   <div className="absolute bottom-6 left-6 z-20">
+                      <span className="bg-white/95 backdrop-blur-md px-4 py-2 font-cinzel text-[10px] tracking-widest uppercase text-obsidian shadow-sm border border-black/5">
+                        The Studio
+                      </span>
+                   </div>
+                </div>
+
+                {/* Secondary Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                   <div className="aspect-square bg-gray-200 overflow-hidden shadow-lg relative group">
+                      <img 
+                        src={images[1]} 
+                        alt="Founder" 
+                        className={`w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700 ${THEME_EFFECTS[content.globalEffect]}`} 
+                      />
+                   </div>
+                   <div className="aspect-square bg-obsidian flex flex-col items-center justify-center text-gold text-center p-4 shadow-lg border border-gold/10">
+                      <Award size={28} className="mb-3 opacity-80" strokeWidth={1} />
+                      <span className="font-cinzel text-3xl block leading-none mb-1">7+</span>
+                      <span className="text-[8px] uppercase tracking-widest opacity-60">Years Exp.</span>
+                   </div>
+                </div>
+             </div>
+
+             {/* RIGHT COLUMN: Narrative Content */}
+             <div className="lg:col-span-7 space-y-16 reveal-block">
+                
+                {/* Philosophy */}
+                <div>
+                   <h3 className="font-cinzel text-3xl text-obsidian mb-8 flex items-center gap-4">
+                     <span className="w-8 h-[1px] bg-gold"></span> Our Philosophy
+                   </h3>
+                   {renderText(about.description)}
+                </div>
+
+                {/* Founder Section */}
+                {about.founderBio && (
+                   <div className="bg-white p-8 md:p-12 border border-black/5 shadow-sm relative overflow-hidden group hover:shadow-md transition-shadow">
+                      <div className="absolute top-0 left-0 w-1 h-full bg-gold opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                      <div className="absolute -right-10 -top-10 text-black/[0.02] font-cinzel text-9xl pointer-events-none select-none">ART</div>
+                      
+                      <h3 className="font-cinzel text-2xl text-obsidian mb-6">The Artist</h3>
+                      <div className="text-charcoal/70 font-light italic text-lg leading-relaxed mb-8">
+                         {renderText(about.founderBio)}
+                      </div>
+                      
+                      <div className="flex items-center gap-4 pt-6 border-t border-black/5">
+                         <div className="w-10 h-10 rounded-full bg-gray-200 overflow-hidden">
+                            <img src={images[1] || images[0]} className="w-full h-full object-cover grayscale" />
+                         </div>
+                         <div>
+                            <span className="font-cinzel text-gold text-sm tracking-widest uppercase font-bold block">Akash</span>
+                            <span className="text-[9px] uppercase tracking-widest text-charcoal/50 block">Founder & Creative Director</span>
+                         </div>
+                      </div>
+                   </div>
+                )}
+                
+                {/* Stats / Values */}
+                <div className="grid grid-cols-3 gap-6 pt-8 border-t border-black/5">
+                   <div className="text-center group">
+                      <Camera size={24} className="mx-auto mb-3 text-gold/70 group-hover:text-gold transition-colors" strokeWidth={1} />
+                      <span className="font-cinzel text-[9px] tracking-widest uppercase text-obsidian">Visionary</span>
+                   </div>
+                   <div className="text-center group">
+                      <Film size={24} className="mx-auto mb-3 text-gold/70 group-hover:text-gold transition-colors" strokeWidth={1} />
+                      <span className="font-cinzel text-[9px] tracking-widest uppercase text-obsidian">Cinematic</span>
+                   </div>
+                   <div className="text-center group">
+                      <Heart size={24} className="mx-auto mb-3 text-gold/70 group-hover:text-gold transition-colors" strokeWidth={1} />
+                      <span className="font-cinzel text-[9px] tracking-widest uppercase text-obsidian">Timeless</span>
+                   </div>
+                </div>
+
+                {/* Signature Quote */}
+                <div className="text-center py-10 bg-black/5 px-8 relative">
+                   <span className="font-serif text-6xl text-gold/20 absolute top-4 left-4">“</span>
+                   <p className="font-cinzel text-xl md:text-2xl text-obsidian italic relative z-10">
+                     "Every frame is a promise kept forever."
+                   </p>
+                </div>
              </div>
           </div>
-
-        </div>
-      </section>
-
-      {/* Videos Section */}
-      {about.videos && about.videos.length > 0 && (
-        <section className="container mx-auto px-6 md:px-20 mb-32 border-t border-black/5 pt-12 md:pt-20">
-          <div className="text-center mb-10 md:mb-16">
+       </section>
+       
+       {/* 3. BEHIND THE SCENES VIDEOS */}
+       {about.videos && about.videos.length > 0 && (
+        <section className="container mx-auto px-6 md:px-20 mb-32 pt-20 border-t border-black/5 reveal-block">
+          <div className="text-center mb-16">
             <span className="text-gold font-cinzel text-[10px] tracking-[0.5em] uppercase block mb-4">Behind The Scenes</span>
-            <h3 className="font-cinzel text-3xl md:text-4xl text-obsidian">The Process</h3>
+            <h3 className="font-cinzel text-3xl md:text-4xl text-obsidian">The Creative Process</h3>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             {about.videos.map((vid, index) => (
               <div 
                 key={index} 
@@ -165,7 +173,7 @@ const About: React.FC = () => {
                     </div>
                  </div>
                  <div className="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black/80 to-transparent">
-                    <p className="text-white text-xs font-cinzel tracking-widest uppercase">Watch Video {index + 1}</p>
+                    <p className="text-white text-xs font-cinzel tracking-widest uppercase">Watch BTS {index + 1}</p>
                  </div>
               </div>
             ))}
@@ -177,5 +185,4 @@ const About: React.FC = () => {
     </div>
   );
 };
-
 export default About;

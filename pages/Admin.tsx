@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
-import { LayoutDashboard, Image as ImageIcon, Video, Settings, User, Phone, Upload, LogOut, RefreshCw, CheckCircle, Trash2, LayoutTemplate, Square, Columns, Palette, Shield, Save, Plus, AlertTriangle, CloudOff, Loader } from 'lucide-react';
-import { useContent, VisualEffect } from '../context/ContentContext.tsx';
+import { LayoutDashboard, Image as ImageIcon, Video, Settings, User, Phone, Upload, LogOut, RefreshCw, CheckCircle, Trash2, LayoutTemplate, Square, Columns, Palette, Shield, Save, Plus, AlertTriangle, CloudOff, Loader, BookOpen, PenTool, Globe, ChevronRight } from 'lucide-react';
+import { useContent, VisualEffect, Story } from '../context/ContentContext.tsx';
 import { THEME_EFFECTS, GALLERY_DATABASE } from '../constants.tsx';
 
 const Admin: React.FC = () => {
@@ -12,10 +12,13 @@ const Admin: React.FC = () => {
 
   const { 
     content, 
+    updateLogo,
     updateHero, 
     updateGlobalEffect, 
     updateHomeLayout, 
     updateCollection, 
+    updateStories,
+    updateStoriesSettings,
     updateFilms, 
     updateAbout, 
     updateContact, 
@@ -27,9 +30,13 @@ const Admin: React.FC = () => {
     saveStatus 
   } = useContent();
   
-  const [activeTab, setActiveTab] = useState<'hero' | 'portfolio' | 'films' | 'about' | 'contact' | 'theme' | 'security'>('theme');
+  const [activeTab, setActiveTab] = useState<'hero' | 'stories' | 'portfolio' | 'films' | 'about' | 'contact' | 'theme' | 'security'>('theme');
   const [isUploading, setIsUploading] = useState(false);
   
+  // Stories Form State
+  const [editingStoryId, setEditingStoryId] = useState<string | null>(null);
+  const [storyForm, setStoryForm] = useState<Partial<Story>>({});
+
   // Film Form State
   const [newFilmTitle, setNewFilmTitle] = useState('');
   const [newFilmUrl, setNewFilmUrl] = useState('');
@@ -81,6 +88,17 @@ const Admin: React.FC = () => {
       setIsUploading(false);
     }
   };
+  
+  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setIsUploading(true);
+      try {
+        const url = await uploadImage(e.target.files[0]);
+        updateLogo(url);
+      } catch(e) { console.error(e); }
+      setIsUploading(false);
+    }
+  };
 
   const handleAboutImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -111,7 +129,7 @@ const Admin: React.FC = () => {
   };
 
   // Bulk Upload logic
-  const handleGridUpload = async (e: React.ChangeEvent<HTMLInputElement>, collection: 'portraits' | 'stories' | 'preWeddings' | 'photobooks' | 'special') => {
+  const handleGridUpload = async (e: React.ChangeEvent<HTMLInputElement>, collection: 'portraits' | 'preWeddings' | 'photobooks' | 'special') => {
     if (e.target.files && e.target.files.length > 0) {
       setIsUploading(true);
       try {
@@ -158,19 +176,15 @@ const Admin: React.FC = () => {
     }
   };
 
-  const removeImage = (collection: 'portraits' | 'stories' | 'preWeddings' | 'photobooks' | 'special', index: number) => {
+  const removeImage = (collection: 'portraits' | 'preWeddings' | 'photobooks' | 'special', index: number) => {
     const newImages = content[collection].filter((_, i) => i !== index);
     updateCollection(collection, newImages);
   };
 
   const addFilm = () => {
     if (newFilmTitle && newFilmUrl) {
-      // Logic: Use uploaded thumbnail, else fallback to first story image, else placeholder
-      const defaultThumb = (content.stories && content.stories.length > 0) 
-        ? content.stories[0] 
-        : 'https://via.placeholder.com/150';
-
-      const thumbToUse = newFilmThumbnail || defaultThumb;
+      // Logic: Use uploaded thumbnail, else fallback to placeholder
+      const thumbToUse = newFilmThumbnail || 'https://via.placeholder.com/150';
 
       updateFilms([...content.films, { 
         title: newFilmTitle, 
@@ -194,6 +208,59 @@ const Admin: React.FC = () => {
     updatedFilms[index] = { ...updatedFilms[index], [field]: value };
     updateFilms(updatedFilms);
   };
+
+  // --- STORY MANAGER FUNCTIONS ---
+  const handleAddNewStory = () => {
+    const newStory: Story = {
+      id: `story-${Date.now()}`,
+      title: 'New Story',
+      couple: '',
+      location: '',
+      description: '',
+      coverImage: 'https://images.unsplash.com/photo-1519741497674-611481863552?q=80&w=1200',
+      gallery: [],
+      content: '',
+      published: false
+    };
+    updateStories([...content.stories, newStory]);
+    setEditingStoryId(newStory.id);
+    setStoryForm(newStory);
+  };
+
+  const handleEditStory = (story: Story) => {
+    setEditingStoryId(story.id);
+    setStoryForm(story);
+  };
+
+  const handleDeleteStory = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this story?')) {
+      updateStories(content.stories.filter(s => s.id !== id));
+      if (editingStoryId === id) setEditingStoryId(null);
+    }
+  };
+
+  const handleSaveStory = () => {
+    if (editingStoryId && storyForm) {
+      const updatedStories = content.stories.map(s => 
+        s.id === editingStoryId ? { ...s, ...storyForm } as Story : s
+      );
+      updateStories(updatedStories);
+      setEditingStoryId(null);
+      setStoryForm({});
+    }
+  };
+
+  const handleStoryCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setIsUploading(true);
+      try {
+        const url = await uploadImage(e.target.files[0]);
+        setStoryForm(prev => ({ ...prev, coverImage: url }));
+      } catch(e) { console.error(e); }
+      setIsUploading(false);
+    }
+  };
+
 
   // --- LOGIN SCREEN ---
   if (!isAuthenticated) {
@@ -275,6 +342,7 @@ const Admin: React.FC = () => {
              {[
                { id: 'theme', icon: Palette, label: 'Theme & Style' },
                { id: 'hero', icon: LayoutDashboard, label: 'Hero Home' },
+               { id: 'stories', icon: BookOpen, label: 'Stories Section' },
                { id: 'portfolio', icon: ImageIcon, label: 'Photos' },
                { id: 'films', icon: Video, label: 'Films' },
                { id: 'about', icon: User, label: 'About Us' },
@@ -283,7 +351,7 @@ const Admin: React.FC = () => {
              ].map((tab) => (
                <button
                  key={tab.id}
-                 onClick={() => setActiveTab(tab.id as any)}
+                 onClick={() => { setActiveTab(tab.id as any); setEditingStoryId(null); }}
                  className={`w-full flex items-center gap-4 px-6 py-4 transition-all text-[11px] uppercase tracking-widest font-cinzel ${activeTab === tab.id ? 'bg-gold text-white shadow-lg' : 'bg-white hover:bg-black/5 text-charcoal'}`}
                >
                  <tab.icon size={16} /> {tab.label}
@@ -327,9 +395,126 @@ const Admin: React.FC = () => {
                </div>
             )}
 
+            {/* --- STORIES SECTION --- */}
+            {activeTab === 'stories' && (
+              <div className="space-y-8">
+                 {/* Global Settings */}
+                 <div className="bg-white p-8 border border-black/5 shadow-sm">
+                    <h3 className="font-cinzel text-lg mb-6">Global Page Settings</h3>
+                    <div className="grid md:grid-cols-2 gap-6">
+                       <div>
+                           <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Page Heading</label>
+                           <input 
+                              type="text" 
+                              className="w-full p-3 border border-black/10 bg-cream/20 font-cinzel text-sm" 
+                              value={content.storiesSettings?.heading || 'Wedding Stories'}
+                              onChange={(e) => updateStoriesSettings({ ...content.storiesSettings, heading: e.target.value })}
+                           />
+                       </div>
+                       <div>
+                           <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Subheading</label>
+                           <input 
+                              type="text" 
+                              className="w-full p-3 border border-black/10 bg-cream/20 font-cinzel text-sm" 
+                              value={content.storiesSettings?.subheading || 'Curated Narratives'}
+                              onChange={(e) => updateStoriesSettings({ ...content.storiesSettings, subheading: e.target.value })}
+                           />
+                       </div>
+                    </div>
+                 </div>
+
+                 {editingStoryId ? (
+                   // --- EDIT MODE ---
+                   <div className="bg-white p-8 border border-gold/30 shadow-lg relative">
+                      <div className="flex justify-between items-center mb-6">
+                         <h3 className="font-cinzel text-lg text-gold">Edit Story</h3>
+                         <button onClick={handleSaveStory} className="bg-obsidian text-white px-6 py-2 text-xs uppercase tracking-widest hover:bg-gold">Save Changes</button>
+                      </div>
+                      
+                      <div className="grid md:grid-cols-2 gap-8">
+                         <div className="space-y-4">
+                            <div>
+                               <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Story Title</label>
+                               <input type="text" className="w-full p-3 border border-black/10 bg-cream/20" value={storyForm.title || ''} onChange={(e) => setStoryForm(p => ({...p, title: e.target.value}))} />
+                            </div>
+                            <div>
+                               <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Couple Names</label>
+                               <input type="text" className="w-full p-3 border border-black/10 bg-cream/20" value={storyForm.couple || ''} onChange={(e) => setStoryForm(p => ({...p, couple: e.target.value}))} />
+                            </div>
+                            <div>
+                               <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Location</label>
+                               <input type="text" className="w-full p-3 border border-black/10 bg-cream/20" value={storyForm.location || ''} onChange={(e) => setStoryForm(p => ({...p, location: e.target.value}))} />
+                            </div>
+                            <div>
+                               <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Short Description</label>
+                               <textarea rows={4} className="w-full p-3 border border-black/10 bg-cream/20 text-sm" value={storyForm.description || ''} onChange={(e) => setStoryForm(p => ({...p, description: e.target.value}))} />
+                            </div>
+                            <div className="flex items-center gap-2">
+                               <input type="checkbox" checked={storyForm.published || false} onChange={(e) => setStoryForm(p => ({...p, published: e.target.checked}))} />
+                               <label className="text-xs uppercase tracking-widest">Publish Live</label>
+                            </div>
+                         </div>
+                         
+                         <div>
+                            <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Cover Image</label>
+                            <div className="aspect-[3/4] bg-gray-100 mb-4 relative overflow-hidden group">
+                               <img src={storyForm.coverImage} className="w-full h-full object-cover" />
+                               <label className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                                  <span className="text-white text-xs uppercase tracking-widest border border-white px-4 py-2">Change Image</span>
+                                  <input type="file" className="hidden" onChange={handleStoryCoverUpload} accept="image/*" />
+                               </label>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+                 ) : (
+                   // --- LIST MODE ---
+                   <div className="space-y-4">
+                      <button onClick={handleAddNewStory} className="w-full py-4 border-2 border-dashed border-black/10 text-charcoal/50 uppercase tracking-widest text-xs hover:border-gold hover:text-gold transition-colors flex items-center justify-center gap-2">
+                         <Plus size={16} /> Add New Story
+                      </button>
+                      
+                      {content.stories.map((story) => (
+                         <div key={story.id} className="bg-white p-4 border border-black/5 flex items-center gap-4 hover:shadow-md transition-shadow">
+                            <img src={story.coverImage} className="w-16 h-16 object-cover bg-gray-100" />
+                            <div className="flex-grow">
+                               <h4 className="font-cinzel text-sm text-obsidian">{story.title}</h4>
+                               <p className="text-xs text-charcoal/60">{story.couple} • {story.location}</p>
+                            </div>
+                            <div className="flex items-center gap-3">
+                               <span className={`text-[9px] px-2 py-1 uppercase tracking-widest ${story.published ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                  {story.published ? 'Live' : 'Draft'}
+                                </span>
+                               <button onClick={() => handleEditStory(story)} className="p-2 text-obsidian hover:text-gold"><PenTool size={16}/></button>
+                               <button onClick={() => handleDeleteStory(story.id)} className="p-2 text-red-400 hover:text-red-600"><Trash2 size={16}/></button>
+                            </div>
+                         </div>
+                      ))}
+                   </div>
+                 )}
+              </div>
+            )}
+
             {/* --- THEME SECTION --- */}
             {activeTab === 'theme' && (
               <div className="space-y-8">
+                {/* Brand Identity */}
+                <div className="bg-white p-8 border border-black/5 shadow-sm">
+                   <h3 className="font-cinzel text-lg mb-6">Brand Identity</h3>
+                   <div className="flex items-center gap-8">
+                      <div className="bg-gray-100 p-4 border border-black/5">
+                          <img src={content.logo} alt="Current Logo" className="h-16 object-contain" />
+                      </div>
+                      <div>
+                          <label className="bg-black/5 hover:bg-gold hover:text-white px-6 py-3 text-xs uppercase tracking-widest cursor-pointer inline-block transition-colors flex items-center gap-2">
+                              <Upload size={14} /> Upload New Logo
+                              <input type="file" className="hidden" onChange={handleLogoUpload} accept="image/*" />
+                          </label>
+                          <p className="text-[10px] text-charcoal/40 mt-2">Recommended: PNG with transparent background.</p>
+                      </div>
+                   </div>
+                </div>
+
                 {/* Visual Effect Selector */}
                 <div className="bg-white p-8 border border-black/5 shadow-sm">
                   <h3 className="font-cinzel text-lg mb-2">Visual Grading</h3>
@@ -380,7 +565,7 @@ const Admin: React.FC = () => {
                <div className="space-y-12">
                   {[
                     { key: 'portraits', label: 'Portraits' }, 
-                    { key: 'stories', label: 'Wedding Stories' },
+                    // Stories removed from simple grid, moved to dedicated tab
                     { key: 'preWeddings', label: 'Pre-Weddings' },
                     { key: 'photobooks', label: 'Photobooks' },
                     { key: 'special', label: 'Special Highlights' }
@@ -401,7 +586,7 @@ const Admin: React.FC = () => {
                         </div>
                         
                         <div className="grid grid-cols-3 md:grid-cols-5 gap-4">
-                           {content[section.key as 'portraits' | 'stories' | 'preWeddings' | 'photobooks' | 'special']?.map((url, i) => (
+                           {content[section.key as 'portraits' | 'preWeddings' | 'photobooks' | 'special']?.map((url, i) => (
                               <div key={i} className="relative group aspect-square bg-gray-100">
                                  <img src={url} className="w-full h-full object-cover" loading="lazy" />
                                  <button 
@@ -522,13 +707,26 @@ const Admin: React.FC = () => {
                           onChange={(e) => updateAbout({ subtitle: e.target.value })} 
                           placeholder="Subtitle"
                         />
-                        <textarea 
-                          rows={10}
-                          className="w-full p-3 border border-black/10 bg-cream/20 text-sm leading-relaxed"
-                          value={content.about.description} 
-                          onChange={(e) => updateAbout({ description: e.target.value })} 
-                          placeholder="Description (Supports line breaks)"
-                        />
+                        <div>
+                          <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Main Description</label>
+                          <textarea 
+                            rows={8}
+                            className="w-full p-3 border border-black/10 bg-cream/20 text-sm leading-relaxed"
+                            value={content.about.description} 
+                            onChange={(e) => updateAbout({ description: e.target.value })} 
+                            placeholder="Description (Supports line breaks)"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-xs uppercase tracking-widest text-charcoal/50 mb-2">Founder Bio</label>
+                          <textarea 
+                            rows={6}
+                            className="w-full p-3 border border-black/10 bg-cream/20 text-sm leading-relaxed"
+                            value={content.about.founderBio || ''} 
+                            onChange={(e) => updateAbout({ founderBio: e.target.value })} 
+                            placeholder="About the Founder"
+                          />
+                        </div>
                         <p className="text-[10px] text-charcoal/40">Tip: Use ALL CAPS for subheadings. Use "✔️" or "✨" for bullet points.</p>
                      </div>
                   </div>

@@ -18,6 +18,7 @@ import Films from './pages/Films.tsx';
 import Stories from './pages/Stories.tsx';
 import Photobooks from './pages/Photobooks.tsx';
 import PreWeddings from './pages/PreWeddings.tsx';
+import SpecialHighlights from './pages/SpecialHighlights.tsx';
 import { NAV_SECTIONS } from './constants.tsx';
 
 const PageTransition: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -53,9 +54,10 @@ const App: React.FC = () => {
                 <Route path="/stories" element={<Stories />} />
                 <Route path="/photobooks" element={<Photobooks />} />
                 <Route path="/pre-weddings" element={<PreWeddings />} />
+                <Route path="/special" element={<SpecialHighlights />} />
                 <Route path="/about" element={<About />} />
                 
-                {NAV_SECTIONS.filter(s => !['/images', '/films', '/stories', '/photobooks', '/pre-weddings', '/about', '/contact', '/office'].includes(s.path)).map((section) => (
+                {NAV_SECTIONS.filter(s => !['/images', '/films', '/stories', '/photobooks', '/pre-weddings', '/special', '/about', '/contact', '/office'].includes(s.path)).map((section) => (
                   <Route 
                     key={section.path} 
                     path={section.path} 

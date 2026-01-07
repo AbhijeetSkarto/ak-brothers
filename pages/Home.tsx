@@ -50,7 +50,7 @@ const Home: React.FC = () => {
 
   return (
     <div ref={containerRef} className="bg-cream">
-      {/* 1. Hero Section - Perfectly Centered Single Action */}
+      {/* 1. Hero Section - Refined for Singular Focus */}
       <section className="relative min-h-[100dvh] flex items-center justify-center overflow-hidden">
         <div className={`absolute inset-0 bg-cover bg-center opacity-90 scale-105 transition-all duration-700 ${getHeroEffect()}`} style={{ backgroundImage: `url(${content.heroImage})` }} />
         <div className="absolute inset-0 bg-black/40" />
@@ -63,17 +63,17 @@ const Home: React.FC = () => {
              <div className="hidden md:block w-12 h-[1px] bg-gold/60"></div>
           </div>
 
-          <h1 className="flex flex-row flex-nowrap justify-center items-baseline gap-x-[1.5vw] mb-10 md:mb-16 leading-none w-full max-w-full overflow-hidden px-2 text-center">
-            <div className="hero-word-1 font-cinzel text-[clamp(1.1rem,5vw,7rem)] text-white tracking-tighter whitespace-nowrap drop-shadow-2xl">
+          <h1 className="flex flex-col md:flex-row flex-nowrap justify-center items-center md:items-baseline gap-y-2 md:gap-x-[1.5vw] mb-12 md:mb-20 leading-none w-full max-w-full overflow-hidden px-2 text-center">
+            <div className="hero-word-1 font-cinzel text-[clamp(1.5rem,7vw,7rem)] text-white tracking-tighter whitespace-nowrap drop-shadow-2xl">
               {renderLetters("AK BROTHERS")}
             </div>
-            <div className="hero-word-2 font-cinzel text-[clamp(1.1rem,5vw,7rem)] text-gold italic tracking-tight whitespace-nowrap drop-shadow-2xl">
+            <div className="hero-word-2 font-cinzel text-[clamp(1.5rem,7vw,7rem)] text-gold italic tracking-tight whitespace-nowrap drop-shadow-2xl">
               {renderLetters("PHOTOGRAPHY", "italic")}
             </div>
           </h1>
 
-          <div className="hero-btns opacity-0 flex justify-center w-full">
-            <Link to="/stories" className="w-full max-w-xs border border-gold/60 hover:border-gold text-white bg-transparent px-10 py-5 font-cinzel text-[10px] md:text-xs tracking-[0.5em] uppercase hover:bg-gold hover:text-obsidian transition-all duration-700 shadow-2xl backdrop-blur-sm">
+          <div className="hero-btns opacity-0 flex justify-center w-full px-4">
+            <Link to="/stories" className="w-full max-w-sm border border-gold/50 hover:border-gold text-white bg-transparent px-10 py-6 font-cinzel text-[11px] md:text-xs tracking-[0.6em] uppercase hover:bg-gold/10 transition-all duration-700 shadow-2xl backdrop-blur-[2px]">
               View Stories
             </Link>
           </div>
@@ -126,7 +126,7 @@ const Home: React.FC = () => {
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12">
                   {latestStories.map((story) => (
-                      <Link key={story.id} to={`/stories`} className="group block space-y-6">
+                      <Link key={story.id} to="/stories" className="group block space-y-6">
                           <div className="aspect-[3/4] overflow-hidden bg-gray-100 relative shadow-lg">
                               <img 
                                 src={story.coverImage} 
@@ -217,7 +217,7 @@ const Home: React.FC = () => {
           </div>
       </section>
       
-      {/* Inquiry section completely removed to ensure production-ready visual balance */}
+      {/* Inquiry section completely removed to ensure no extra padding or blank gaps */}
     </div>
   );
 };

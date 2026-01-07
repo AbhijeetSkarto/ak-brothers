@@ -102,7 +102,11 @@ const INITIAL_CONTENT: SiteContent = {
   portraits: [...GALLERY_DATABASE.portraits],
   preWeddings: [...GALLERY_DATABASE.preWeddings],
   photobooks: [...GALLERY_DATABASE.photobooks],
-  special: [], 
+  special: [
+    'https://acqlo-fff.s3.ap-south-1.amazonaws.com/user_uploads/f9cfc13f-a90b-45f1-b554-289482e6140a-88.jpg',
+    'https://acqlo-fff.s3.ap-south-1.amazonaws.com/user_uploads/eae86dfb-7c55-4691-9b9a-60b1677fb07e-005.jpg',
+    'https://acqlo-fff.s3.ap-south-1.amazonaws.com/user_uploads/97978b63-dbed-4fff-a61e-b60f5fd6eb57-69.jpg'
+  ], 
   
   // Updated Stories Data with Premium Samples
   stories: [
